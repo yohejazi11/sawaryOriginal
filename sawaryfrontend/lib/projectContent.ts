@@ -1,5 +1,4 @@
 import type { Project } from '@/lib/projects'
-import { translateCategoryServer } from '@/lib/categoryLabels'
 import type { Locale } from '@/lib/i18n'
 
 const SITE_NAME = {
@@ -7,27 +6,34 @@ const SITE_NAME = {
   en: 'Sawary Design & Execution',
 } as const
 
+/** The project's first tag, localized — tags carry their own bilingual name directly. */
+function primaryTagName(project: Project, lang: Locale): string {
+  const tag = project.tags[0]
+  if (!tag) return ''
+  return lang === 'ar' ? tag.nameAr : tag.nameEn
+}
+
 /**
  * Real project descriptions are frequently empty in the CMS. When that happens,
  * fall back to a short, truthful sentence built only from fields the API actually
- * returns (name, category, location) — never invented details like room type,
+ * returns (name, tag, location) — never invented details like room type,
  * materials, or architectural style.
  */
 export function getProjectDescription(project: Project, lang: Locale): string {
   const trimmed = project.description?.trim()
   if (trimmed) return trimmed
 
-  const category = translateCategoryServer(lang, project.categorySlug || project.category)
+  const tag = primaryTagName(project, lang)
   const site = SITE_NAME[lang]
 
   if (lang === 'ar') {
-    return category
-      ? `${project.name} — مشروع ${category}${project.location ? ` في ${project.location}` : ''} من تنفيذ ${site}.`
+    return tag
+      ? `${project.name} — مشروع ${tag}${project.location ? ` في ${project.location}` : ''} من تنفيذ ${site}.`
       : `${project.name} — مشروع من تنفيذ ${site}.`
   }
 
-  return category
-    ? `${project.name} — a ${category} project${project.location ? ` in ${project.location}` : ''} by ${site}.`
+  return tag
+    ? `${project.name} — a ${tag} project${project.location ? ` in ${project.location}` : ''} by ${site}.`
     : `${project.name} — a project by ${site}.`
 }
 
@@ -43,11 +49,11 @@ export function getCoverImageAlt(project: Project): string {
  * fabricated room name or location.
  */
 export function getGalleryImageAlt(project: Project, lang: Locale, position: number, total: number): string {
-  const category = translateCategoryServer(lang, project.categorySlug || project.category)
+  const tag = primaryTagName(project, lang)
 
   const base = lang === 'ar'
-    ? (category ? `منظر داخلي لمشروع ${category} من تنفيذ سواري` : 'منظر داخلي لمشروع من تنفيذ سواري')
-    : (category ? `Interior view of a ${category} project by Sawary` : 'Interior view of a project by Sawary')
+    ? (tag ? `منظر داخلي لمشروع ${tag} من تنفيذ سواري` : 'منظر داخلي لمشروع من تنفيذ سواري')
+    : (tag ? `Interior view of a ${tag} project by Sawary` : 'Interior view of a project by Sawary')
 
   const suffix = lang === 'ar' ? `— صورة ${position} من ${total}` : `— image ${position} of ${total}`
 

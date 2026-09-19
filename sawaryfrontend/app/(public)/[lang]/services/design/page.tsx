@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { getProjectsByCategorySlug } from '@/lib/projects'
+import { getProjectsByTagSlug } from '@/lib/projects'
 import DesignServiceClient from './DesignServiceClient'
 import { breadcrumbJsonLd, serviceJsonLd, jsonLdScript } from '@/lib/seo'
 import { localizedHref, type Locale } from '@/lib/i18n'
@@ -70,7 +70,7 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: Loc
 export default async function DesignServicePage({ params }: { params: Promise<{ lang: Locale }> }) {
   const { lang } = await params
   const c = COPY[lang]
-  const projects = await getProjectsByCategorySlug('design')
+  const projects = await getProjectsByTagSlug('design')
 
   const jsonLd = [
     breadcrumbJsonLd(c.breadcrumbs.map(({ name, path }) => ({ name, path: localizedHref(lang, path) }))),

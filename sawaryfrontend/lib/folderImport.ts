@@ -9,9 +9,17 @@ export interface StagedFile {
   relativePath: string
 }
 
+export interface StagedProjectFile {
+  file: File
+  /** Name of the sub-folder directly under the project folder, or null if the file
+   * sits directly inside the project folder (no section). Anything nested deeper
+   * than one extra level flattens into that same section. */
+  sectionName: string | null
+}
+
 export interface ProjectGroup {
   folderName: string
-  files: File[]
+  files: StagedProjectFile[]
 }
 
 // ── Source 1: <input type="file" webkitdirectory> ──────────────────────────────
@@ -101,7 +109,7 @@ export interface GroupResult {
 }
 
 export function groupIntoProjects(staged: StagedFile[]): GroupResult {
-  const byFolder = new Map<string, File[]>()
+  const byFolder = new Map<string, StagedProjectFile[]>()
   const allFolders = new Set<string>()
 
   for (const { file, relativePath } of staged) {
@@ -115,14 +123,20 @@ export function groupIntoProjects(staged: StagedFile[]): GroupResult {
 
     if (!IMAGE_EXTENSIONS.test(file.name)) continue
 
+    // segments[2] = section sub-folder directly under the project folder, when the file
+    // is nested at least one level deeper than the project folder itself (segments.length
+    // >= 4, i.e. Root/Project/Section/file.ext). A file sitting right inside the project
+    // folder (segments.length === 3) has no section.
+    const sectionName = segments.length >= 4 ? segments[2] : null
+
     const list = byFolder.get(folderName) ?? []
-    list.push(file)
+    list.push({ file, sectionName })
     byFolder.set(folderName, list)
   }
 
   const groups = Array.from(byFolder.entries()).map(([folderName, files]) => ({
     folderName,
-    files: files.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })),
+    files: files.sort((a, b) => a.file.name.localeCompare(b.file.name, undefined, { numeric: true, sensitivity: 'base' })),
   }))
   const skippedFolders = Array.from(allFolders).filter(f => !byFolder.has(f))
 

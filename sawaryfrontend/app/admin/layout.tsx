@@ -51,7 +51,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const navLinks = [
     { href: '/admin',            label: 'الرئيسية'    },
-    { href: '/admin/categories', label: 'التصنيفات'   },
+    { href: '/admin/tags',       label: 'التاقات'      },
     { href: '/admin/projects',   label: 'المشاريع'    },
     { href: '/admin/services',   label: 'الخدمات'     },
     { href: '/admin/about',      label: 'صفحة من نحن' },

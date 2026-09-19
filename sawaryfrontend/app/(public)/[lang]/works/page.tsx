@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import WorksClient from './WorksClient'
-import { getProjects } from '@/lib/projects'
+import { getProjects, getTags } from '@/lib/projects'
 import { breadcrumbJsonLd, jsonLdScript } from '@/lib/seo'
 import { localizedHref, type Locale } from '@/lib/i18n'
 
@@ -64,14 +64,14 @@ export default async function WorksPage({ params }: { params: Promise<{ lang: Lo
   const breadcrumbs = breadcrumbJsonLd(
     c.breadcrumbs.map(({ name, path }) => ({ name, path: localizedHref(lang, path) }))
   )
-  const projects = await getProjects()
+  const [projects, tags] = await Promise.all([getProjects(), getTags()])
   return (
     <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLdScript(breadcrumbs) }}
       />
-      <WorksClient initialProjects={projects} />
+      <WorksClient initialProjects={projects} initialTags={tags} />
     </>
   )
 }

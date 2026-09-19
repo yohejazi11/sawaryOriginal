@@ -3,9 +3,10 @@
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { apiGet, apiPost, apiUpload } from '@/lib/api'
-import { type ApiCategory } from '@/lib/projects'
+import { type ApiTag } from '@/lib/projects'
 import {
   type GroupResult,
+  type StagedProjectFile,
   readWebkitDirectoryInput,
   readDroppedItems,
   groupIntoProjects,
@@ -17,7 +18,7 @@ const MAX_FILES_PER_UPLOAD = 20
 interface ImportRow {
   folderName: string
   name: string
-  files: File[]
+  files: StagedProjectFile[]
   status: 'pending' | 'creating' | 'uploading' | 'done' | 'error'
   uploadedCount: number
   projectId?: number
@@ -30,9 +31,26 @@ function chunk<T>(arr: T[], size: number): T[][] {
   return out
 }
 
+// e.g. "دورة المياه (5)، المكتب (4)، بدون قسم (3)" — lets the admin sanity-check the
+// detected section grouping before committing to the import.
+function sectionBreakdown(files: StagedProjectFile[]): string {
+  const order: string[] = []
+  const counts = new Map<string, number>()
+  let ungrouped = 0
+  for (const { sectionName } of files) {
+    if (sectionName === null) { ungrouped++; continue }
+    if (!counts.has(sectionName)) order.push(sectionName)
+    counts.set(sectionName, (counts.get(sectionName) ?? 0) + 1)
+  }
+  if (order.length === 0) return ''
+  const parts = order.map(name => `${name} (${counts.get(name)})`)
+  if (ungrouped > 0) parts.push(`بدون قسم (${ungrouped})`)
+  return parts.join('، ')
+}
+
 export default function BulkImportPage() {
-  const [categories, setCategories] = useState<ApiCategory[]>([])
-  const [categoryId, setCategoryId] = useState<number | ''>('')
+  const [tags, setTags] = useState<ApiTag[]>([])
+  const [tagIds, setTagIds] = useState<number[]>([])
   const [year, setYear] = useState(String(new Date().getFullYear()))
   const [rows, setRows] = useState<ImportRow[]>([])
   const [phase, setPhase] = useState<'pick' | 'import'>('pick')
@@ -43,12 +61,12 @@ export default function BulkImportPage() {
   const dirInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    apiGet<ApiCategory[]>('/api/categories').then(cats => {
-      setCategories(cats)
-      const commercial = cats.find(c => c.slug === 'commercial')
-      setCategoryId((commercial ?? cats[0])?.id ?? '')
-    }).catch(() => {})
+    apiGet<ApiTag[]>('/api/tags').then(setTags).catch(() => {})
   }, [])
+
+  function toggleTag(id: number) {
+    setTagIds(prev => prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id])
+  }
 
   function loadGroups({ groups, skippedFolders }: GroupResult) {
     if (groups.length === 0) {
@@ -93,7 +111,6 @@ export default function BulkImportPage() {
   }
 
   async function startImport() {
-    if (!categoryId) return
     setPhase('import')
     setRunning(true)
 
@@ -106,13 +123,42 @@ export default function BulkImportPage() {
           description: '',
           location: '',
           year,
-          categoryId: Number(categoryId),
+          tagIds,
         })
         updateRow(i, { status: 'uploading', projectId: created.id })
 
-        const batches = chunk(row.files, MAX_FILES_PER_UPLOAD)
+        // Group by detected section (first-seen order); files with no section upload last.
+        const sectionOrder: string[] = []
+        const bySection = new Map<string, File[]>()
+        const ungroupedFiles: File[] = []
+        for (const { file, sectionName } of row.files) {
+          if (sectionName === null) { ungroupedFiles.push(file); continue }
+          if (!bySection.has(sectionName)) { bySection.set(sectionName, []); sectionOrder.push(sectionName) }
+          bySection.get(sectionName)!.push(file)
+        }
+
+        const sectionIdByName = new Map<string, number>()
+        for (const name of sectionOrder) {
+          const section = await apiPost<{ id: number }>(`/api/projects/${created.id}/sections`, {
+            nameAr: name,
+            nameEn: name,
+          })
+          sectionIdByName.set(name, section.id)
+        }
+
         let uploaded = 0
-        for (const batch of batches) {
+        for (const name of sectionOrder) {
+          const sectionId = sectionIdByName.get(name)!
+          for (const batch of chunk(bySection.get(name)!, MAX_FILES_PER_UPLOAD)) {
+            const form = new FormData()
+            batch.forEach(f => form.append('files[]', f))
+            form.append('sectionId', String(sectionId))
+            await apiUpload(`/api/projects/${created.id}/images`, form)
+            uploaded += batch.length
+            updateRow(i, { uploadedCount: uploaded })
+          }
+        }
+        for (const batch of chunk(ungroupedFiles, MAX_FILES_PER_UPLOAD)) {
           const form = new FormData()
           batch.forEach(f => form.append('files[]', f))
           await apiUpload(`/api/projects/${created.id}/images`, form)
@@ -188,26 +234,36 @@ export default function BulkImportPage() {
                 </p>
               )}
 
-              <div className="mb-5 grid grid-cols-2 gap-4">
-                <div>
-                  <label className="mb-1.5 block text-xs text-[rgb(240,238,232)]/60">التصنيف (لكل المشاريع)</label>
-                  <select
-                    value={categoryId}
-                    onChange={e => setCategoryId(Number(e.target.value))}
-                    className="w-full rounded-sm border border-brand-primary/25 bg-brand-bg px-3 py-2.5 text-sm text-[rgb(240,238,232)] outline-none focus:border-brand-primary"
-                  >
-                    {categories.map(c => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="mb-1.5 block text-xs text-[rgb(240,238,232)]/60">السنة (لكل المشاريع)</label>
-                  <input
-                    value={year}
-                    onChange={e => setYear(e.target.value)}
-                    className="w-full rounded-sm border border-brand-primary/25 bg-brand-bg px-3 py-2.5 text-sm text-[rgb(240,238,232)] outline-none focus:border-brand-primary"
-                  />
+              <div className="mb-5">
+                <label className="mb-1.5 block text-xs text-[rgb(240,238,232)]/60">السنة (لكل المشاريع)</label>
+                <input
+                  value={year}
+                  onChange={e => setYear(e.target.value)}
+                  className="w-full max-w-xs rounded-sm border border-brand-primary/25 bg-brand-bg px-3 py-2.5 text-sm text-[rgb(240,238,232)] outline-none focus:border-brand-primary"
+                />
+              </div>
+
+              <div className="mb-5">
+                <label className="mb-1.5 block text-xs text-[rgb(240,238,232)]/60">التاقات (اختياري، لكل المشاريع — تقدر تختار أكثر من وحدة)</label>
+                <div className="flex flex-wrap gap-2">
+                  {tags.map(tg => {
+                    const active = tagIds.includes(tg.id)
+                    return (
+                      <button
+                        key={tg.id}
+                        type="button"
+                        onClick={() => toggleTag(tg.id)}
+                        className="rounded-full border px-3 py-1.5 text-xs transition-colors"
+                        style={{
+                          borderColor: active ? 'rgb(190,156,100)' : 'rgba(190,156,100,0.3)',
+                          background: active ? 'rgb(190,156,100)' : 'transparent',
+                          color: active ? '#fff' : 'rgb(240,238,232)',
+                        }}
+                      >
+                        {tg.nameAr}
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
 
@@ -219,14 +275,15 @@ export default function BulkImportPage() {
                       onChange={e => updateRow(i, { name: e.target.value })}
                       className="flex-1 rounded-sm border border-brand-primary/20 bg-brand-bg px-2.5 py-1.5 text-sm text-[rgb(240,238,232)] outline-none focus:border-brand-primary"
                     />
-                    <span className="shrink-0 text-xs text-[rgb(240,238,232)]/40">{row.files.length} صورة</span>
+                    <span className="shrink-0 text-xs text-[rgb(240,238,232)]/40">
+                      {row.files.length} صورة{sectionBreakdown(row.files) && ` — ${sectionBreakdown(row.files)}`}
+                    </span>
                   </div>
                 ))}
               </div>
 
               <button
                 onClick={startImport}
-                disabled={!categoryId}
                 className="rounded-sm bg-brand-primary px-8 py-2.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-60"
               >
                 بدء الاستيراد

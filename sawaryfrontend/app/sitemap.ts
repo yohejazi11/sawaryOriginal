@@ -13,8 +13,6 @@ const ROUTES: { path: string; changeFrequency: NonNullable<MetadataRoute.Sitemap
   { path: '/services/execution', changeFrequency: 'monthly', priority: 0.8 },
   { path: '/services/catalog', changeFrequency: 'weekly', priority: 0.7 },
   { path: '/works', changeFrequency: 'weekly', priority: 0.9 },
-  { path: '/works/execution/commercial', changeFrequency: 'weekly', priority: 0.7 },
-  { path: '/works/execution/residential', changeFrequency: 'weekly', priority: 0.7 },
 ]
 
 function entry(

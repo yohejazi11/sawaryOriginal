@@ -57,7 +57,7 @@ export async function generateMetadata({
     description,
     keywords: [
       project.name,
-      project.category ?? '',
+      ...project.tags.map(tag => (lang === 'ar' ? tag.nameAr : tag.nameEn)),
       project.location ?? '',
       ...c.keywords,
     ].filter(Boolean),
@@ -112,9 +112,7 @@ export default async function ProjectDetailPage({
       id: p.id,
       name: p.name,
       coverImageUrl: p.coverImageUrl,
-      categoryName: p.category?.name ?? '',
-      categorySlug: p.category?.slug ?? '',
-      categoryType: p.category?.type === 'execution' ? 'execution' as const : 'design' as const,
+      tags: (p.tags ?? []).map(tag => ({ nameAr: tag.nameAr, nameEn: tag.nameEn })),
       year: p.year,
     }))
 

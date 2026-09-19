@@ -5,7 +5,6 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { ArrowUpRight } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
-import { translateCategory } from '@/lib/categoryLabels'
 import { localizedHref } from '@/lib/i18n'
 
 const EASE = [0.22, 1, 0.36, 1] as const
@@ -19,7 +18,7 @@ export interface DesignCardProps {
   name: string
   seed?: string
   image?: string
-  /** Category slug (preferred) — fed straight into translateCategory(); pass a slug, not the free-text display name. */
+  /** Already-localized display text (e.g. a project tag's name) — pass pre-translated text. */
   category?: string
   type?: 'design' | 'execution'
   year?: string
@@ -39,7 +38,7 @@ export default function DesignCard({
 }: DesignCardProps) {
   const { t, lang } = useLanguage()
   const imgSrc = image || `https://picsum.photos/seed/${seed ?? 'default'}/500/700`
-  const displayCategory = category ? translateCategory(t, category) : t('designCard.defaultCategory')
+  const displayCategory = category || t('designCard.defaultCategory')
   const cornerLabel = t(`designCard.types.${type}`)
 
   const card = (

@@ -1,11 +1,10 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ImageOff } from 'lucide-react';
 import Footer from '@/components/sections/Footer';
 import PortfolioCard from '@/components/ui/PortfolioCard';
-import { type ApiProjectList } from '@/lib/projects';
-import { translateCategory } from '@/lib/categoryLabels';
+import { type ApiProjectList, type ApiTag } from '@/lib/projects';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { localizedHref, type Locale } from '@/lib/i18n';
 import { motion } from 'framer-motion';
@@ -16,20 +15,6 @@ const EASE = [0.22, 1, 0.36, 1] as const;
 // codebase defines its own design tokens rather than importing a shared one.
 const DOT_PATTERN =
     `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Ccircle cx='12' cy='12' r='1' fill='rgba(190%2C156%2C100%2C0.09)'/%3E%3C/svg%3E")`;
-
-// ── Shared helpers ────────────────────────────────────────────────────────────
-
-function SectionLabel({ children }: { children: React.ReactNode }) {
-    return (
-        <div className="flex items-center gap-5">
-            <span className="h-px flex-1 bg-brand-primary/35" />
-            <span className="shrink-0 text-sm font-light tracking-[0.3em] text-brand-primary uppercase">
-                {children}
-            </span>
-            <span className="h-px flex-1 bg-brand-primary/35" />
-        </div>
-    );
-}
 
 function EmptyState({ title, body }: { title: string; body: string }) {
     return (
@@ -43,25 +28,13 @@ function EmptyState({ title, body }: { title: string; body: string }) {
     );
 }
 
-function subtitleFor(p: ApiProjectList, t: (key: string) => string, showCategory: boolean): string | undefined {
-    const parts = [
-        showCategory ? translateCategory(t, p.category?.slug || p.category?.name) : null,
-        p.location || null,
-    ].filter(Boolean);
+function subtitleFor(p: ApiProjectList, lang: Locale): string | undefined {
+    const tagName = p.tags[0] ? (lang === 'ar' ? p.tags[0].nameAr : p.tags[0].nameEn) : null;
+    const parts = [tagName, p.location || null].filter(Boolean);
     return parts.length ? parts.join(' — ') : undefined;
 }
 
-function PortfolioGrid({
-    projects,
-    lang,
-    t,
-    showCategory,
-}: {
-    projects: ApiProjectList[]
-    lang: Locale
-    t: (key: string) => string
-    showCategory: boolean
-}) {
+function PortfolioGrid({ projects, lang }: { projects: ApiProjectList[]; lang: Locale }) {
     return (
         <div className="mx-auto grid max-w-[1600px] grid-cols-1 gap-3 sm:grid-cols-2 md:gap-3 lg:grid-cols-3 xl:grid-cols-4">
             {projects
@@ -72,7 +45,7 @@ function PortfolioGrid({
                         href={localizedHref(lang, `/works/project/${p.id}`)}
                         image={p.coverImageUrl}
                         name={p.name}
-                        subtitle={subtitleFor(p, t, showCategory)}
+                        subtitle={subtitleFor(p, lang)}
                         priority={i < 4}
                     />
                 ))}
@@ -82,34 +55,29 @@ function PortfolioGrid({
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 
-export default function WorksClient({ initialProjects }: { initialProjects: ApiProjectList[] }) {
+export default function WorksClient({
+    initialProjects,
+    initialTags,
+}: {
+    initialProjects: ApiProjectList[]
+    initialTags: ApiTag[]
+}) {
     const { t, lang } = useLanguage();
 
-    const executionProjects = initialProjects.filter((p) => p.category?.type === 'execution');
-    const designProjects = initialProjects.filter((p) => p.category?.type === 'design');
+    // Multi-select tag filter, OR semantics — a project shows if it carries ANY of the
+    // selected tags. Empty selection = show everything.
+    const [activeTagIds, setActiveTagIds] = useState<number[]>([]);
 
-    // Scroll-spy — drives the pill tabs' active state as the user scrolls past each
-    // section, since both sections render simultaneously (the tabs are anchor-scroll
-    // shortcuts, not a content switcher) and a static active state would be misleading.
-    const [activeSection, setActiveSection] = useState<'execution' | 'design'>('execution');
-    const executionSectionRef = useRef<HTMLElement>(null);
-    const designSectionRef = useRef<HTMLElement>(null);
+    function toggleTag(id: number) {
+        setActiveTagIds(prev => prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id]);
+    }
 
-    useEffect(() => {
-        const observer = new IntersectionObserver(
-            (entries) => {
-                entries.forEach((entry) => {
-                    if (entry.isIntersecting) {
-                        setActiveSection(entry.target.id === 'execution-projects' ? 'execution' : 'design');
-                    }
-                });
-            },
-            { rootMargin: '-35% 0px -55% 0px' },
-        );
-        if (executionSectionRef.current) observer.observe(executionSectionRef.current);
-        if (designSectionRef.current) observer.observe(designSectionRef.current);
-        return () => observer.disconnect();
-    }, []);
+    const tags = [...initialTags].sort((a, b) => a.orderIndex - b.orderIndex);
+
+    const filteredProjects = useMemo(() => {
+        if (activeTagIds.length === 0) return initialProjects;
+        return initialProjects.filter(p => p.tags.some(tag => activeTagIds.includes(tag.id)));
+    }, [initialProjects, activeTagIds]);
 
     return (
         <main className="min-h-screen bg-brand-bg" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
@@ -124,37 +92,34 @@ export default function WorksClient({ initialProjects }: { initialProjects: ApiP
                     {t('nav.works')}
                 </motion.h1>
 
-                {/* Segmented pill control — real background/border/active-state tabs */}
-                <motion.nav
-                    initial={{ opacity: 0, y: 14 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.7, delay: 0.15, ease: EASE }}
-                    className="inline-flex items-center gap-1 rounded-full border border-brand-primary/25 bg-brand-cream/[0.04] p-1 backdrop-blur-sm"
-                    aria-label={t('nav.works')}
-                >
-                    <a
-                        href="#execution-projects"
-                        aria-current={activeSection === 'execution' ? 'true' : undefined}
-                        className={`rounded-full px-6 py-2.5 text-sm font-light tracking-[0.15em] uppercase transition-all duration-300 ${
-                            activeSection === 'execution'
-                                ? 'bg-brand-primary text-white shadow-md shadow-black/20'
-                                : 'text-brand-cream/60 hover:text-brand-cream'
-                        }`}
+                {/* Tag filter bar — multi-select pills, OR semantics */}
+                {tags.length > 0 && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 14 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.7, delay: 0.15, ease: EASE }}
+                        className="flex flex-wrap items-center justify-center gap-2"
                     >
-                        {t('worksPage.executionTab')}
-                    </a>
-                    <a
-                        href="#design-projects"
-                        aria-current={activeSection === 'design' ? 'true' : undefined}
-                        className={`rounded-full px-6 py-2.5 text-sm font-light tracking-[0.15em] uppercase transition-all duration-300 ${
-                            activeSection === 'design'
-                                ? 'bg-brand-primary text-white shadow-md shadow-black/20'
-                                : 'text-brand-cream/60 hover:text-brand-cream'
-                        }`}
-                    >
-                        {t('worksPage.designTab')}
-                    </a>
-                </motion.nav>
+                        {tags.map(tag => {
+                            const active = activeTagIds.includes(tag.id);
+                            return (
+                                <button
+                                    key={tag.id}
+                                    onClick={() => toggleTag(tag.id)}
+                                    aria-pressed={active}
+                                    className="rounded-full border px-5 py-2 text-sm font-light tracking-[0.1em] uppercase transition-all duration-300"
+                                    style={{
+                                        borderColor: active ? 'rgb(190,156,100)' : 'rgba(190,156,100,0.3)',
+                                        background: active ? 'rgb(190,156,100)' : 'transparent',
+                                        color: active ? '#fff' : 'rgba(244,239,227,0.7)',
+                                    }}
+                                >
+                                    {lang === 'ar' ? tag.nameAr : tag.nameEn}
+                                </button>
+                            );
+                        })}
+                    </motion.div>
+                )}
             </section>
 
             {/* ── Transition — replaces the old empty gap with a soft visual bridge
@@ -181,46 +146,10 @@ export default function WorksClient({ initialProjects }: { initialProjects: ApiP
                 />
             </div>
 
-            {/* ── Execution Projects ────────────────────────────────────────────── */}
-            <section id="execution-projects" ref={executionSectionRef} className="px-4 pb-24 md:px-10">
-                <div className="mx-auto mb-10 flex max-w-[1600px] flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-                    <div className="w-full max-w-md">
-                        <SectionLabel>{t('homeServices.execution.title')}</SectionLabel>
-                    </div>
-
-                    {/* Sub-category drill-down — preserved functionality, minimal styling */}
-                    <div className="flex items-center gap-6 sm:shrink-0">
-                        <a
-                            href={localizedHref(lang, '/works/execution/residential')}
-                            className="text-sm font-light tracking-[0.15em] text-brand-primary/80 uppercase transition-colors duration-200 hover:text-brand-primary"
-                        >
-                            {translateCategory(t, 'residential')}
-                        </a>
-                        <span className="h-3.5 w-px bg-brand-primary/25" />
-                        <a
-                            href={localizedHref(lang, '/works/execution/commercial')}
-                            className="text-sm font-light tracking-[0.15em] text-brand-primary/80 uppercase transition-colors duration-200 hover:text-brand-primary"
-                        >
-                            {translateCategory(t, 'commercial')}
-                        </a>
-                    </div>
-                </div>
-
-                {executionProjects.length > 0 ? (
-                    <PortfolioGrid projects={executionProjects} lang={lang} t={t} showCategory />
-                ) : (
-                    <EmptyState title={t('worksPage.noProjectsTitle')} body={t('worksPage.noProjectsBody')} />
-                )}
-            </section>
-
-            {/* ── Design Projects ───────────────────────────────────────────────── */}
-            <section id="design-projects" ref={designSectionRef} className="px-4 pb-28 md:px-10">
-                <div className="mx-auto mb-10 max-w-[1600px]">
-                    <SectionLabel>{t('worksPage.designHeading')}</SectionLabel>
-                </div>
-
-                {designProjects.length > 0 ? (
-                    <PortfolioGrid projects={designProjects} lang={lang} t={t} showCategory={false} />
+            {/* ── All Projects ──────────────────────────────────────────────────── */}
+            <section className="px-4 pb-28 md:px-10">
+                {filteredProjects.length > 0 ? (
+                    <PortfolioGrid projects={filteredProjects} lang={lang} />
                 ) : (
                     <EmptyState title={t('worksPage.noProjectsTitle')} body={t('worksPage.noProjectsBody')} />
                 )}

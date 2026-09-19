@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useEffect, useState, FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
@@ -6,24 +6,28 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { apiGet, apiPost, apiUpload } from '@/lib/api'
 
-interface Category { id: number; name: string }
+interface Tag { id: number; nameAr: string; nameEn: string }
 
 export default function NewProjectPage() {
   const router = useRouter()
-  const [categories, setCategories] = useState<Category[]>([])
+  const [tags, setTags] = useState<Tag[]>([])
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [location, setLocation] = useState('')
   const [year, setYear] = useState(String(new Date().getFullYear()))
-  const [categoryId, setCategoryId] = useState<number | ''>('')
+  const [tagIds, setTagIds] = useState<number[]>([])
   const [coverFile, setCoverFile] = useState<File | null>(null)
   const [coverPreview, setCoverPreview] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
-    apiGet<Category[]>('/api/categories').then(setCategories).catch(() => {})
+    apiGet<Tag[]>('/api/tags').then(setTags).catch(() => {})
   }, [])
+
+  function toggleTag(id: number) {
+    setTagIds(prev => prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id])
+  }
 
   function handleCoverChange(file: File | null) {
     if (coverPreview) URL.revokeObjectURL(coverPreview)
@@ -33,12 +37,11 @@ export default function NewProjectPage() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    if (!categoryId) { setError('اختر تصنيفاً'); return }
     setError('')
     setSaving(true)
     try {
       const created = await apiPost<{ id: number }>('/api/projects', {
-        name, description, location, year, categoryId: Number(categoryId),
+        name, description, location, year, tagIds,
       })
       if (coverFile) {
         const form = new FormData()
@@ -106,18 +109,30 @@ export default function NewProjectPage() {
         </div>
 
         <div className="mb-6">
-          <label className="mb-1.5 block text-xs text-[rgb(240,238,232)]/60">التصنيف</label>
-          <select
-            value={categoryId}
-            onChange={e => setCategoryId(Number(e.target.value))}
-            required
-            className="w-full rounded-sm border border-brand-primary/25 bg-brand-bg px-3 py-2.5 text-sm text-[rgb(240,238,232)] outline-none focus:border-brand-primary"
-          >
-            <option value="">اختر تصنيفاً</option>
-            {categories.map(c => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
+          <label className="mb-1.5 block text-xs text-[rgb(240,238,232)]/60">التاقات (اختياري، تقدر تختار أكثر من وحدة)</label>
+          <div className="flex flex-wrap gap-2">
+            {tags.map(tg => {
+              const active = tagIds.includes(tg.id)
+              return (
+                <button
+                  key={tg.id}
+                  type="button"
+                  onClick={() => toggleTag(tg.id)}
+                  className="rounded-full border px-3 py-1.5 text-xs transition-colors"
+                  style={{
+                    borderColor: active ? 'rgb(190,156,100)' : 'rgba(190,156,100,0.3)',
+                    background: active ? 'rgb(190,156,100)' : 'transparent',
+                    color: active ? '#fff' : 'rgb(240,238,232)',
+                  }}
+                >
+                  {tg.nameAr}
+                </button>
+              )
+            })}
+            {tags.length === 0 && (
+              <p className="text-xs text-[rgb(240,238,232)]/40">لا توجد تاقات بعد — <Link href="/admin/tags" className="text-brand-primary hover:underline">أضف تاقاً</Link></p>
+            )}
+          </div>
         </div>
 
         <div className="mb-6">

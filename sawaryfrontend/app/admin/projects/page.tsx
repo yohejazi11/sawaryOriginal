@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
@@ -11,38 +11,39 @@ interface ProjectItem {
   year: string
   isFeatured: boolean
   coverImageUrl: string
-  category: { id: number; name: string }
+  tags: { id: number; nameAr: string; nameEn: string }[]
   imageCount: number
 }
 
-interface Category {
+interface Tag {
   id: number
-  name: string
+  nameAr: string
+  nameEn: string
 }
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<ProjectItem[]>([])
-  const [categories, setCategories] = useState<Category[]>([])
-  const [catFilter, setCatFilter] = useState('')
+  const [tags, setTags] = useState<Tag[]>([])
+  const [tagFilter, setTagFilter] = useState('')
   const [loading, setLoading] = useState(true)
 
-  async function load(categoryId?: string) {
+  async function load(tagId?: string) {
     setLoading(true)
-    const qs = categoryId ? `?categoryId=${categoryId}` : ''
-    const [projs, cats] = await Promise.all([
+    const qs = tagId ? `?tagId=${tagId}` : ''
+    const [projs, allTags] = await Promise.all([
       apiGet<ProjectItem[]>(`/api/projects${qs}`).catch(() => []),
-      apiGet<Category[]>('/api/categories').catch(() => []),
+      apiGet<Tag[]>('/api/tags').catch(() => []),
     ])
     setProjects(projs)
-    setCategories(cats)
+    setTags(allTags)
     setLoading(false)
   }
 
   useEffect(() => { load() }, [])
 
-  function handleFilter(categoryId: string) {
-    setCatFilter(categoryId)
-    load(categoryId || undefined)
+  function handleFilter(tagId: string) {
+    setTagFilter(tagId)
+    load(tagId || undefined)
   }
 
   async function toggleFeatured(id: number) {
@@ -85,13 +86,13 @@ export default function ProjectsPage() {
       {/* Filter */}
       <div className="mb-6">
         <select
-          value={catFilter}
+          value={tagFilter}
           onChange={e => handleFilter(e.target.value)}
           className="rounded-sm border border-brand-primary/25 bg-brand-bg px-4 py-2 text-sm text-[rgb(240,238,232)] outline-none focus:border-brand-primary"
         >
-          <option value="">كل التصنيفات</option>
-          {categories.map(c => (
-            <option key={c.id} value={c.id}>{c.name}</option>
+          <option value="">كل التاقات</option>
+          {tags.map(tg => (
+            <option key={tg.id} value={tg.id}>{tg.nameAr}</option>
           ))}
         </select>
       </div>
@@ -105,7 +106,7 @@ export default function ProjectsPage() {
               <tr className="border-b border-brand-primary/20 text-right text-xs text-brand-primary">
                 <th className="pb-3">الصورة</th>
                 <th className="pb-3">الاسم</th>
-                <th className="pb-3">التصنيف</th>
+                <th className="pb-3">التاقات</th>
                 <th className="pb-3">السنة</th>
                 <th className="pb-3">مميز</th>
                 <th className="pb-3">الإجراءات</th>
@@ -130,7 +131,13 @@ export default function ProjectsPage() {
                     </div>
                   </td>
                   <td className="py-3 font-medium">{p.name}</td>
-                  <td className="py-3 text-xs text-[rgb(240,238,232)]/60">{p.category?.name}</td>
+                  <td className="py-3 text-xs text-[rgb(240,238,232)]/60">
+                    <div className="flex flex-wrap gap-1">
+                      {p.tags.map(tg => (
+                        <span key={tg.id} className="rounded-sm border border-brand-primary/25 px-1.5 py-0.5">{tg.nameAr}</span>
+                      ))}
+                    </div>
+                  </td>
                   <td className="py-3 text-xs text-[rgb(240,238,232)]/60">{p.year}</td>
                   <td className="py-3">
                     <button

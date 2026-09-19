@@ -6,24 +6,23 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { apiGet, apiPut, apiUpload, apiPatch } from '@/lib/api'
 
-interface Category { id: number; name: string }
+interface Tag { id: number; nameAr: string; nameEn: string }
 interface ProjectImage { id: number; url: string }
 interface Project {
   id: number; name: string; description: string
-  location: string; year: string; categoryId: number; coverImageUrl: string
-  category: { id: number; name: string }
+  location: string; year: string; coverImageUrl: string
+  tags: Tag[]
 }
-
 
 export default function EditProjectPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const router = useRouter()
-  const [categories, setCategories] = useState<Category[]>([])
+  const [tags, setTags] = useState<Tag[]>([])
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [location, setLocation] = useState('')
   const [year, setYear] = useState('')
-  const [categoryId, setCategoryId] = useState<number | ''>('')
+  const [tagIds, setTagIds] = useState<number[]>([])
   const [coverImageUrl, setCoverImageUrl] = useState('')
   const [coverFile, setCoverFile] = useState<File | null>(null)
   const [coverPreview, setCoverPreview] = useState('')
@@ -34,17 +33,21 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
   useEffect(() => {
     Promise.all([
       apiGet<Project>(`/api/projects/${id}`).catch(() => null),
-      apiGet<Category[]>('/api/categories').catch(() => []),
-    ]).then(([proj, cats]) => {
-      setCategories(cats)
+      apiGet<Tag[]>('/api/tags').catch(() => []),
+    ]).then(([proj, allTags]) => {
+      setTags(allTags)
       if (proj) {
         setName(proj.name); setDescription(proj.description)
         setLocation(proj.location); setYear(proj.year)
-        setCategoryId(proj.category?.id ?? '')
+        setTagIds(proj.tags.map(t => t.id))
         setCoverImageUrl(proj.coverImageUrl)
       }
     })
   }, [id])
+
+  function toggleTag(tagId: number) {
+    setTagIds(prev => prev.includes(tagId) ? prev.filter(t => t !== tagId) : [...prev, tagId])
+  }
 
   function handleCoverChange(file: File | null) {
     if (coverPreview) URL.revokeObjectURL(coverPreview)
@@ -54,10 +57,9 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    if (!categoryId) { setError('اختر تصنيفاً'); return }
     setError(''); setSuccess(false); setSaving(true)
     try {
-      await apiPut(`/api/projects/${id}`, { name, description, location, year, categoryId: Number(categoryId) })
+      await apiPut(`/api/projects/${id}`, { name, description, location, year, tagIds })
       if (coverFile) {
         const form = new FormData()
         form.append('files[]', coverFile)
@@ -113,12 +115,30 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
           </div>
         </div>
         <div className="mb-6">
-          <label className="mb-1.5 block text-xs text-[rgb(240,238,232)]/60">التصنيف</label>
-          <select value={categoryId} onChange={e => setCategoryId(Number(e.target.value))} required
-            className="w-full rounded-sm border border-brand-primary/25 bg-brand-bg px-3 py-2.5 text-sm text-[rgb(240,238,232)] outline-none focus:border-brand-primary">
-            <option value="">اختر تصنيفاً</option>
-            {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
+          <label className="mb-1.5 block text-xs text-[rgb(240,238,232)]/60">التاقات (اختياري، تقدر تختار أكثر من وحدة)</label>
+          <div className="flex flex-wrap gap-2">
+            {tags.map(tg => {
+              const active = tagIds.includes(tg.id)
+              return (
+                <button
+                  key={tg.id}
+                  type="button"
+                  onClick={() => toggleTag(tg.id)}
+                  className="rounded-full border px-3 py-1.5 text-xs transition-colors"
+                  style={{
+                    borderColor: active ? 'rgb(190,156,100)' : 'rgba(190,156,100,0.3)',
+                    background: active ? 'rgb(190,156,100)' : 'transparent',
+                    color: active ? '#fff' : 'rgb(240,238,232)',
+                  }}
+                >
+                  {tg.nameAr}
+                </button>
+              )
+            })}
+            {tags.length === 0 && (
+              <p className="text-xs text-[rgb(240,238,232)]/40">لا توجد تاقات بعد — <Link href="/admin/tags" className="text-brand-primary hover:underline">أضف تاقاً</Link></p>
+            )}
+          </div>
         </div>
 
         <div className="mb-6">

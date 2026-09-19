@@ -1,0 +1,5 @@
+bin/
+obj/
+
+# Contains local dev secrets (JWT key, local connection string) — never commit this.
+appsettings.Development.json

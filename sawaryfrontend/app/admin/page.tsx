@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { apiGet } from '@/lib/api'
 
 interface Stats {
-  categories: number
+  tags: number
   projects: number
   images: number
 }
@@ -15,13 +15,13 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     Promise.all([
-      apiGet<{ length: number }>('/api/categories').catch(() => ({ length: 0 })),
+      apiGet<{ length: number }>('/api/tags').catch(() => ({ length: 0 })),
       apiGet<Array<{ imageCount: number }>>('/api/projects').catch(() => []),
-    ]).then(([cats, projects]) => {
-      const catArr = Array.isArray(cats) ? cats : []
+    ]).then(([tags, projects]) => {
+      const tagArr = Array.isArray(tags) ? tags : []
       const projArr = Array.isArray(projects) ? projects : []
       setStats({
-        categories: catArr.length,
+        tags: tagArr.length,
         projects: projArr.length,
         images: projArr.reduce((sum, p) => sum + (p.imageCount ?? 0), 0),
       })
@@ -29,7 +29,7 @@ export default function AdminDashboard() {
   }, [])
 
   const statCards = [
-    { label: 'التصنيفات', value: stats?.categories ?? '—', href: '/admin/categories' },
+    { label: 'التاقات', value: stats?.tags ?? '—', href: '/admin/tags' },
     { label: 'المشاريع', value: stats?.projects ?? '—', href: '/admin/projects' },
     { label: 'الصور الإجمالية', value: stats?.images ?? '—', href: '/admin/projects' },
   ]
@@ -61,10 +61,10 @@ export default function AdminDashboard() {
           + مشروع جديد
         </Link>
         <Link
-          href="/admin/categories"
+          href="/admin/tags"
           className="rounded-sm border border-brand-primary/40 px-6 py-3 text-sm text-brand-primary hover:bg-brand-primary/10"
         >
-          إدارة التصنيفات
+          إدارة التاقات
         </Link>
       </div>
     </div>

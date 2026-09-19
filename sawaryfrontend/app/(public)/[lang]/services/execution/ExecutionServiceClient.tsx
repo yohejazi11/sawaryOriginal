@@ -73,13 +73,13 @@ export default function ExecutionServiceClient({
     {
       title: t('servicesExecution.specialties.residential.title'),
       body: t('servicesExecution.specialties.residential.body'),
-      href: '/works/execution/residential',
+      href: '/works',
       image: '/images/services/implement.avif',
     },
     {
       title: t('servicesExecution.specialties.commercial.title'),
       body: t('servicesExecution.specialties.commercial.body'),
-      href: '/works/execution/commercial',
+      href: '/works',
       image: '/images/services/commercial.jpg',
     },
   ]
@@ -334,7 +334,7 @@ export default function ExecutionServiceClient({
                 key={p.id}
                 name={p.name}
                 image={p.coverImageUrl || undefined}
-                category={p.category?.slug || p.category?.name}
+                category={p.tags[0] ? (lang === 'ar' ? p.tags[0].nameAr : p.tags[0].nameEn) : undefined}
                 type="execution"
                 year={p.year}
                 delay={i * 0.1}

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { getProjectsByCategorySlug } from '@/lib/projects'
+import { getProjectsByTagSlug } from '@/lib/projects'
 import ExecutionServiceClient from './ExecutionServiceClient'
 import { breadcrumbJsonLd, serviceJsonLd, jsonLdScript } from '@/lib/seo'
 import { localizedHref, type Locale } from '@/lib/i18n'
@@ -71,10 +71,14 @@ export default async function ExecutionServicePage({ params }: { params: Promise
   const { lang } = await params
   const c = COPY[lang]
   const [commercial, residential] = await Promise.all([
-    getProjectsByCategorySlug('commercial'),
-    getProjectsByCategorySlug('residential'),
+    getProjectsByTagSlug('commercial'),
+    getProjectsByTagSlug('residential'),
   ])
-  const projects = [...commercial, ...residential]
+  // A project can now carry both tags at once (tags are many-to-many) — de-duplicate
+  // so it doesn't render twice in this combined execution list.
+  const projects = [...commercial, ...residential].filter(
+    (p, i, arr) => arr.findIndex(other => other.id === p.id) === i,
+  )
 
   const jsonLd = [
     breadcrumbJsonLd(c.breadcrumbs.map(({ name, path }) => ({ name, path: localizedHref(lang, path) }))),

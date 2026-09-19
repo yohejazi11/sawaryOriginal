@@ -364,7 +364,7 @@ export default function DesignServiceClient({
                 key={p.id}
                 name={p.name}
                 image={p.coverImageUrl || undefined}
-                category={p.category?.slug || p.category?.name}
+                category={p.tags[0] ? (lang === 'ar' ? p.tags[0].nameAr : p.tags[0].nameEn) : undefined}
                 type="design"
                 year={p.year}
                 delay={i * 0.1}

@@ -14,7 +14,6 @@ import { useRouter } from 'next/navigation'
 import { ArrowRight, ChevronDown, ChevronLeft, ChevronRight, X } from 'lucide-react'
 
 import { type Project } from '@/lib/projects'
-import { translateCategory } from '@/lib/categoryLabels'
 import { getProjectDescription, getCoverImageAlt, getGalleryImageAlt } from '@/lib/projectContent'
 import DesignCard from '@/components/ui/DesignCard'
 import JustifiedGallery from '@/components/ui/JustifiedGallery'
@@ -30,9 +29,7 @@ export interface RelatedProject {
   id: number
   name: string
   coverImageUrl: string
-  categoryName: string
-  categorySlug: string
-  categoryType: 'design' | 'execution'
+  tags: { nameAr: string; nameEn: string }[]
   year: string
 }
 
@@ -54,8 +51,24 @@ export default function ProjectPageClient({
     setTimeout(() => router.back(), 700)
   }, [router])
 
+  const orderedGroups = [
+    ...project.sections.map(s => ({
+      id: s.id as number | null,
+      name: lang === 'ar' ? s.nameAr : s.nameEn,
+      images: s.images,
+    })),
+    ...(project.images.length > 0 ? [{ id: null, name: null, images: project.images }] : []),
+  ]
+  let runningOffset = 0
+  const groupsWithOffset = orderedGroups.map(g => {
+    const offset = runningOffset
+    runningOffset += g.images.length
+    return { ...g, offset }
+  })
+  const flatImages = orderedGroups.flatMap(g => g.images)
+
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
-  const total = project.images.length
+  const total = flatImages.length
 
   const openLightbox = useCallback((i: number) => setLightboxIndex(i), [])
   const closeLightbox = useCallback(() => setLightboxIndex(null), [])
@@ -67,12 +80,7 @@ export default function ProjectPageClient({
   }, [total])
 
   const description = getProjectDescription(project, lang)
-  const galleryItems = project.images.map((img, i) => ({
-    src: img.src,
-    width: img.width,
-    height: img.height,
-    alt: getGalleryImageAlt(project, lang, i + 1, total),
-  }))
+  const tagNames = project.tags.map(t => (lang === 'ar' ? t.nameAr : t.nameEn)).join(lang === 'ar' ? '، ' : ', ')
 
   return (
     <main className="min-h-screen bg-brand-bg" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
@@ -130,7 +138,7 @@ export default function ProjectPageClient({
         >
           <div className="mt-1 w-px bg-brand-primary" style={{ height: 64 }} />
           <div className="flex flex-col gap-1.5" dir={lang === 'ar' ? 'rtl' : 'ltr'} style={{ textShadow: '0 1px 8px rgba(0,0,0,0.55)' }}>
-            <span className="text-sm tracking-[0.25em] text-brand-primary">{translateCategory(t, project.categorySlug || project.category)}</span>
+            {tagNames && <span className="text-sm tracking-[0.25em] text-brand-primary">{tagNames}</span>}
             <span className="text-sm tracking-[0.25em] text-brand-primary">{project.year}</span>
             <span className="text-sm tracking-[0.25em] text-brand-primary">{project.location}</span>
           </div>
@@ -212,13 +220,24 @@ export default function ProjectPageClient({
         </motion.div>
       </section>
       {/* ── Section 4: Details Bar ────────────────────────────────────────── */}
-      <DetailsBar project={project} />
+      <DetailsBar project={project} imageCount={total} />
       {/* ── Section 3: Project Gallery (Justified Rows — no cropping) ──────── */}
-      {galleryItems.length > 0 && (
-        <section className="px-3 py-10 md:px-6">
-          <JustifiedGallery images={galleryItems} onImageClick={openLightbox} />
+      {groupsWithOffset.map(group => group.images.length > 0 && (
+        <section key={group.id ?? 'ungrouped'} className="px-3 py-10 md:px-6">
+          {group.name && (
+            <h2 className="mb-6 px-3 text-2xl font-bold text-brand-cream md:px-0">{group.name}</h2>
+          )}
+          <JustifiedGallery
+            images={group.images.map((img, i) => ({
+              src: img.src,
+              width: img.width,
+              height: img.height,
+              alt: getGalleryImageAlt(project, lang, group.offset + i + 1, total),
+            }))}
+            onImageClick={i => openLightbox(group.offset + i)}
+          />
         </section>
-      )}
+      ))}
 
 
 
@@ -245,8 +264,7 @@ export default function ProjectPageClient({
                 key={String(p.id)}
                 name={p.name}
                 image={p.coverImageUrl}
-                category={p.categorySlug || p.categoryName}
-                type={p.categoryType}
+                category={p.tags[0] ? (lang === 'ar' ? p.tags[0].nameAr : p.tags[0].nameEn) : undefined}
                 year={p.year}
                 delay={i * 0.1}
                 href={`/works/project/${p.id}`}
@@ -262,7 +280,7 @@ export default function ProjectPageClient({
       <AnimatePresence>
         {lightboxIndex !== null && (
           <Lightbox
-            images={project.images.map(img => img.src)}
+            images={flatImages.map(img => img.src)}
             index={lightboxIndex}
             onClose={closeLightbox}
             onPrev={showPrev}
@@ -358,13 +376,14 @@ function Lightbox({
 
 // ── Details bar (Section 4) ───────────────────────────────────────────────────
 
-function DetailsBar({ project }: { project: Project }) {
-  const { t } = useLanguage()
+function DetailsBar({ project, imageCount }: { project: Project; imageCount: number }) {
+  const { t, lang } = useLanguage()
+  const tagNames = project.tags.map(tg => (lang === 'ar' ? tg.nameAr : tg.nameEn)).join(lang === 'ar' ? '، ' : ', ')
   const stats = [
-    { label: t('projectDetail.stats.type'), value: translateCategory(t, project.categorySlug || project.category) },
+    ...(tagNames ? [{ label: t('projectDetail.stats.type'), value: tagNames }] : []),
     { label: t('projectDetail.stats.year'), value: project.year },
     { label: t('projectDetail.stats.location'), value: project.location },
-    { label: t('projectDetail.stats.imageCount'), value: String(project.images.length) },
+    { label: t('projectDetail.stats.imageCount'), value: String(imageCount) },
   ]
 
   return (
