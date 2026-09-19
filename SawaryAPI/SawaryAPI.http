@@ -1,6 +1,0 @@
-@SawaryAPI_HostAddress = http://localhost:5298
-
-GET {{SawaryAPI_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
