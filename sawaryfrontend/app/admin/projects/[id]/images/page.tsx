@@ -27,6 +27,11 @@ interface ProjectSection {
   images: ProjectImage[]
 }
 
+interface UploadResult {
+  uploaded: ProjectImage[]
+  errors: { file: string; message: string }[]
+}
+
 interface Project {
   id: number
   name: string
@@ -117,7 +122,10 @@ export default function ProjectImagesPage({ params }: { params: Promise<{ id: st
     previews.forEach(p => form.append('files', p.file))
     if (uploadSectionId !== null) form.append('sectionId', String(uploadSectionId))
     try {
-      await apiUpload(`/api/projects/${id}/images`, form)
+      const result = await apiUpload<UploadResult>(`/api/projects/${id}/images`, form)
+      if (result.errors.length > 0) {
+        setUploadError(`تم رفع ${result.uploaded.length} صورة، وتعذّر رفع: ${result.errors.map(e => `${e.file} (${e.message})`).join('، ')}`)
+      }
       setPreviews([])
       await load()
     } catch (err) {

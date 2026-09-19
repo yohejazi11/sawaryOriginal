@@ -13,9 +13,13 @@ namespace SawaryAPI.Controllers;
 [Authorize]
 public class ImagesController(AppDbContext db, LocalImageStorageService storage) : ControllerBase
 {
-    // POST /api/projects/{projectId}/images — upload 1-20 images, optionally into a section
+    // POST /api/projects/{projectId}/images — upload 1-20 images, optionally into a section.
+    // A file that fails validation (bad type, too large) is skipped, not fatal to the whole
+    // batch — this endpoint is the target of bulk folder imports where one oversized photo
+    // deep in a big batch shouldn't blow up every other file alongside it.
     [HttpPost("api/projects/{projectId:int}/images")]
-    [RequestSizeLimit(200 * 1024 * 1024)] // 200 MB total
+    [RequestSizeLimit(500 * 1024 * 1024)] // 500 MB total — up to 20 files at the 20MB per-file cap
+    [RequestFormLimits(MultipartBodyLengthLimit = 500 * 1024 * 1024)]
     public async Task<IActionResult> Upload(int projectId, [FromForm] List<IFormFile> files, [FromForm] int? sectionId)
     {
         var project = await db.Projects.FindAsync(projectId);
@@ -33,6 +37,7 @@ public class ImagesController(AppDbContext db, LocalImageStorageService storage)
 
         var baseUrl = $"{Request.Scheme}://{Request.Host}";
         var uploaded = new List<ProjectImageDto>();
+        var errors = new List<UploadErrorDto>();
         // Each section (and the ungrouped bucket) orders its images independently.
         var nextOrder = await db.ProjectImages
             .Where(i => i.ProjectId == projectId && i.SectionId == sectionId)
@@ -87,11 +92,11 @@ public class ImagesController(AppDbContext db, LocalImageStorageService storage)
             }
             catch (ArgumentException ex)
             {
-                return BadRequest(new { message = ex.Message, file = file.FileName });
+                errors.Add(new UploadErrorDto { File = file.FileName, Message = ex.Message });
             }
         }
 
-        return Ok(uploaded);
+        return Ok(new UploadResultDto { Uploaded = uploaded, Errors = errors });
     }
 
     // DELETE /api/images/{id}
@@ -181,4 +186,16 @@ public class ImagesController(AppDbContext db, LocalImageStorageService storage)
 public class SetCoverDto
 {
     public int ImageId { get; set; }
+}
+
+public class UploadErrorDto
+{
+    public string File { get; set; } = string.Empty;
+    public string Message { get; set; } = string.Empty;
+}
+
+public class UploadResultDto
+{
+    public List<ProjectImageDto> Uploaded { get; set; } = [];
+    public List<UploadErrorDto> Errors { get; set; } = [];
 }

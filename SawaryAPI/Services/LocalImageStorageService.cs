@@ -3,7 +3,9 @@ namespace SawaryAPI.Services;
 public class LocalImageStorageService(IWebHostEnvironment env)
 {
     private static readonly HashSet<string> _allowed = ["jpg", "jpeg", "png", "webp"];
-    private const long MaxBytes = 10 * 1024 * 1024; // 10 MB
+    // Real interior/real-estate photography (DSLR, high-res phone shots) routinely runs
+    // 10-20MB — the old 10MB cap was rejecting legitimate portfolio photos.
+    public const long MaxBytes = 20 * 1024 * 1024; // 20 MB
 
     // Saves the file under wwwroot/uploads/{folder}/ and returns its path relative to wwwroot
     // (e.g. "uploads/villa-project/3f2a1b...jpg"), which is also its public URL path.
@@ -14,7 +16,7 @@ public class LocalImageStorageService(IWebHostEnvironment env)
             throw new ArgumentException($"File type .{ext} is not allowed. Use jpg, jpeg, png or webp.");
 
         if (file.Length > MaxBytes)
-            throw new ArgumentException("File size exceeds the 10 MB limit.");
+            throw new ArgumentException($"File size exceeds the {MaxBytes / (1024 * 1024)} MB limit.");
 
         var fileName = $"{Guid.NewGuid():N}.{ext}";
         var folderPath = Path.Combine(env.WebRootPath, "uploads", folder);

@@ -14,7 +14,7 @@ namespace SawaryAPI.Controllers;
 public class ServiceSectionsController(AppDbContext db) : ControllerBase
 {
     private static readonly HashSet<string> AllowedExtensions = new(StringComparer.OrdinalIgnoreCase) { "jpg", "jpeg", "png", "webp" };
-    private const long MaxFileSize = 10 * 1024 * 1024; // 10 MB
+    private const long MaxFileSize = LocalImageStorageService.MaxBytes;
 
     private static ServiceCardDto MapCard(ServiceCard c) => new()
     {
@@ -137,7 +137,7 @@ public class ServiceSectionsController(AppDbContext db) : ControllerBase
     // POST /api/service-sections/{id}/hero — admin only, multipart form key "image"
     [Authorize]
     [HttpPost("{id:int}/hero")]
-    [RequestSizeLimit(10 * 1024 * 1024)]
+    [RequestSizeLimit(MaxFileSize)]
     public async Task<IActionResult> UploadHero(int id, IFormFile image, [FromServices] LocalImageStorageService storage)
     {
         var section = await db.ServiceSections.FindAsync(id);
@@ -168,7 +168,7 @@ public class ServiceSectionsController(AppDbContext db) : ControllerBase
     // POST /api/service-sections/{id}/cards — admin only, multipart form: "title" + "image"
     [Authorize]
     [HttpPost("{id:int}/cards")]
-    [RequestSizeLimit(10 * 1024 * 1024)]
+    [RequestSizeLimit(MaxFileSize)]
     public async Task<IActionResult> CreateCard(int id, [FromForm] string title, IFormFile image, [FromServices] LocalImageStorageService storage)
     {
         var section = await db.ServiceSections.FindAsync(id);

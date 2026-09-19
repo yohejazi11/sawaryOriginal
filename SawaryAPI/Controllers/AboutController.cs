@@ -162,7 +162,7 @@ public class AboutController(AppDbContext db) : ControllerBase
     // POST /api/about/team-photo — admin only, multipart, form key "image"
     [Authorize]
     [HttpPost("team-photo")]
-    [RequestSizeLimit(10 * 1024 * 1024)]
+    [RequestSizeLimit(LocalImageStorageService.MaxBytes)]
     public async Task<IActionResult> UploadTeamPhoto(
         IFormFile image,
         [FromServices] LocalImageStorageService storage)

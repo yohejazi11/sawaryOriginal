@@ -23,6 +23,14 @@ interface ImportRow {
   uploadedCount: number
   projectId?: number
   errorMessage?: string
+  // Files the backend skipped (too large, wrong type) — the row still finishes as
+  // 'done' with everything else, this just lists what didn't make it.
+  skippedFiles: { file: string; message: string }[]
+}
+
+interface UploadResult {
+  uploaded: { id: number }[]
+  errors: { file: string; message: string }[]
 }
 
 function chunk<T>(arr: T[], size: number): T[][] {
@@ -86,6 +94,7 @@ export default function BulkImportPage() {
       files: g.files,
       status: 'pending',
       uploadedCount: 0,
+      skippedFiles: [],
     })))
   }
 
@@ -147,23 +156,26 @@ export default function BulkImportPage() {
         }
 
         let uploaded = 0
+        const skipped: { file: string; message: string }[] = []
         for (const name of sectionOrder) {
           const sectionId = sectionIdByName.get(name)!
           for (const batch of chunk(bySection.get(name)!, MAX_FILES_PER_UPLOAD)) {
             const form = new FormData()
             batch.forEach(f => form.append('files', f))
             form.append('sectionId', String(sectionId))
-            await apiUpload(`/api/projects/${created.id}/images`, form)
-            uploaded += batch.length
-            updateRow(i, { uploadedCount: uploaded })
+            const result = await apiUpload<UploadResult>(`/api/projects/${created.id}/images`, form)
+            uploaded += result.uploaded.length
+            skipped.push(...result.errors)
+            updateRow(i, { uploadedCount: uploaded, skippedFiles: [...skipped] })
           }
         }
         for (const batch of chunk(ungroupedFiles, MAX_FILES_PER_UPLOAD)) {
           const form = new FormData()
           batch.forEach(f => form.append('files', f))
-          await apiUpload(`/api/projects/${created.id}/images`, form)
-          uploaded += batch.length
-          updateRow(i, { uploadedCount: uploaded })
+          const result = await apiUpload<UploadResult>(`/api/projects/${created.id}/images`, form)
+          uploaded += result.uploaded.length
+          skipped.push(...result.errors)
+          updateRow(i, { uploadedCount: uploaded, skippedFiles: [...skipped] })
         }
 
         updateRow(i, { status: 'done' })
@@ -334,6 +346,11 @@ export default function BulkImportPage() {
                   ) : (
                     <p className="mt-1 text-xs text-[rgb(240,238,232)]/50">
                       {row.uploadedCount} / {row.files.length} صورة مرفوعة
+                    </p>
+                  )}
+                  {row.skippedFiles.length > 0 && (
+                    <p className="mt-1 text-xs" style={{ color: '#e0a070' }}>
+                      تم تجاوز {row.skippedFiles.length} صورة: {row.skippedFiles.map(s => `${s.file} (${s.message})`).join('، ')}
                     </p>
                   )}
                 </div>

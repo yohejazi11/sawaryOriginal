@@ -8,6 +8,7 @@ import { apiGet, apiPut, apiUpload, apiPatch } from '@/lib/api'
 
 interface Tag { id: number; nameAr: string; nameEn: string }
 interface ProjectImage { id: number; url: string }
+interface UploadResult { uploaded: ProjectImage[]; errors: { file: string; message: string }[] }
 interface Project {
   id: number; name: string; description: string
   location: string; year: string; coverImageUrl: string
@@ -63,9 +64,11 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
       if (coverFile) {
         const form = new FormData()
         form.append('files', coverFile)
-        const uploaded = await apiUpload<ProjectImage[]>(`/api/projects/${id}/images`, form)
-        if (uploaded[0]) {
-          await apiPatch(`/api/projects/${id}/cover`, { imageId: uploaded[0].id })
+        const result = await apiUpload<UploadResult>(`/api/projects/${id}/images`, form)
+        if (result.uploaded[0]) {
+          await apiPatch(`/api/projects/${id}/cover`, { imageId: result.uploaded[0].id })
+        } else if (result.errors[0]) {
+          throw new Error(result.errors[0].message)
         }
       }
       setSuccess(true)
