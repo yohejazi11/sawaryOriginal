@@ -1,5 +1,6 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -68,6 +69,22 @@ builder.Services.AddCors(options =>
               .AllowCredentials());
 });
 
+// ── Forwarded headers — production runs behind a reverse proxy (Nginx/Caddy/LB)
+//    terminating TLS and proxying to Kestrel over plain HTTP. Without this, every
+//    Request.Scheme the controllers read (to build absolute image URLs) reports
+//    "http" instead of "https", producing mixed http/https URLs for the same host —
+//    which next/image's remotePatterns then rejects as a protocol mismatch.
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    // The proxy's IP isn't known at build time in this codebase (varies by host/
+    // container network), so trust any forwarder — standard for a single reverse
+    // proxy sitting directly in front of the app. Scope this to the proxy's actual
+    // IP/subnet instead if Kestrel is ever reachable directly from the internet.
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
 // ── Application services ──────────────────────────────────────────────────────
 builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<LocalImageStorageService>();
@@ -110,6 +127,9 @@ using (var scope = app.Services.CreateScope())
 }
 
 // ── Middleware pipeline ───────────────────────────────────────────────────────
+// Must run first so every later middleware/controller sees the real client scheme/host.
+app.UseForwardedHeaders();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
