@@ -45,7 +45,7 @@ export default function NewProjectPage() {
       })
       if (coverFile) {
         const form = new FormData()
-        form.append('files[]', coverFile)
+        form.append('files', coverFile)
         await apiUpload(`/api/projects/${created.id}/images`, form)
       }
       router.push(`/admin/projects`)

@@ -114,7 +114,7 @@ export default function ProjectImagesPage({ params }: { params: Promise<{ id: st
     setUploading(true)
     setUploadError('')
     const form = new FormData()
-    previews.forEach(p => form.append('files[]', p.file))
+    previews.forEach(p => form.append('files', p.file))
     if (uploadSectionId !== null) form.append('sectionId', String(uploadSectionId))
     try {
       await apiUpload(`/api/projects/${id}/images`, form)

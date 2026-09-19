@@ -62,7 +62,7 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
       await apiPut(`/api/projects/${id}`, { name, description, location, year, tagIds })
       if (coverFile) {
         const form = new FormData()
-        form.append('files[]', coverFile)
+        form.append('files', coverFile)
         const uploaded = await apiUpload<ProjectImage[]>(`/api/projects/${id}/images`, form)
         if (uploaded[0]) {
           await apiPatch(`/api/projects/${id}/cover`, { imageId: uploaded[0].id })

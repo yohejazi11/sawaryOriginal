@@ -151,7 +151,7 @@ export default function BulkImportPage() {
           const sectionId = sectionIdByName.get(name)!
           for (const batch of chunk(bySection.get(name)!, MAX_FILES_PER_UPLOAD)) {
             const form = new FormData()
-            batch.forEach(f => form.append('files[]', f))
+            batch.forEach(f => form.append('files', f))
             form.append('sectionId', String(sectionId))
             await apiUpload(`/api/projects/${created.id}/images`, form)
             uploaded += batch.length
@@ -160,7 +160,7 @@ export default function BulkImportPage() {
         }
         for (const batch of chunk(ungroupedFiles, MAX_FILES_PER_UPLOAD)) {
           const form = new FormData()
-          batch.forEach(f => form.append('files[]', f))
+          batch.forEach(f => form.append('files', f))
           await apiUpload(`/api/projects/${created.id}/images`, form)
           uploaded += batch.length
           updateRow(i, { uploadedCount: uploaded })
