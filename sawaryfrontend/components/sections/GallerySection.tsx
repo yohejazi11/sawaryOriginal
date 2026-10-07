@@ -47,20 +47,20 @@ function GalleryShell({ lang, children }: { lang: Locale; children: ReactNode })
     const worksHref = localizedHref(lang, "/works");
 
     return (
-        <section className="w-full h-fit bg-[#F4EFE3] flex flex-col py-[64px] px-[32px] ">
-            <div className="w-full flex justify-between items-center gap-[32px] max-sm:flex-col">
-                <Reveal className="w-[40%] text-[#343229]">
-                    <p className="text-[64px]">استعرض ابداعاتنا وأعمالنا</p>
+        <section className="w-full h-fit bg-[#F4EFE3] flex flex-col py-[64px] px-[32px] max-sm:px-4 ">
+            <div className="w-full flex justify-between items-center gap-[32px] max-sm:flex-col max-sm:items-start max-sm:gap-6">
+                <Reveal className="w-[40%] max-sm:w-full text-[#343229]">
+                    <p className="text-[64px] max-lg:text-[48px] max-md:text-[40px] max-sm:text-[34px] max-lg:leading-tight">استعرض ابداعاتنا وأعمالنا</p>
                 </Reveal>
 
-                <div className="w-[60%] flex flex-col items-end gap-6">
+                <div className="w-[60%] max-sm:w-full flex flex-col items-end max-sm:items-start gap-6 max-sm:flex-col-reverse">
                     <Reveal delay={0.15}>
                         <Link href={worksHref} className="block w-fit px-[46px] py-2 rounded-[15px] bg-[#343229] text-[#F4EFE3]">
                             المزيد
                         </Link>
                     </Reveal>
-                    <Reveal delay={0.25} className="w-[75%]">
-                        <p className="text-[16px] text-[#343229] text-[20px] text-left">
+                    <Reveal delay={0.25} className="w-[75%] max-sm:w-full">
+                        <p className="text-[16px] text-[#343229] text-[20px] max-sm:text-[17px] text-left max-sm:text-start">
                             تصفّح مجموعة من المشاريع التي حوّلنا فيها الأفكار إلى مساحات نابضة بالحياة، كل تصميم يحكي قصة ذوق وكل تنفيذ يعكس شغفنا بالتفاصيل
                         </p>
                     </Reveal>
@@ -69,7 +69,7 @@ function GalleryShell({ lang, children }: { lang: Locale; children: ReactNode })
 
             {children}
 
-            <Reveal className="w-full flex justify-center items-center mt-[64px]">
+            <Reveal className="w-full flex justify-center items-center mt-[64px] max-sm:mt-10">
                 <Link href={worksHref} className="w-fit px-[46px] py-2 rounded-[15px] border border-[#343229] text-[#343229]">
                     المزيد
                 </Link>
@@ -80,7 +80,7 @@ function GalleryShell({ lang, children }: { lang: Locale; children: ReactNode })
 
 function GalleryGrid({ renderCell }: { renderCell: (height: string, index: number) => ReactNode }) {
     return (
-        <div className="w-full flex justify-between items-start gap-2 max-sm:flex-col mt-[64px]">
+        <div className="w-full flex justify-between items-start gap-2 max-sm:flex-col mt-[64px] max-sm:mt-10">
             {COLUMN_HEIGHTS.map((heights, col) => (
                 <div key={col} className="w-[calc(100%/3)] max-sm:w-full h-fit relative flex flex-col justify-end gap-2 text-white">
                     {heights.map((height, row) => renderCell(height, col * 2 + row))}

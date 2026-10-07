@@ -34,7 +34,7 @@ export default function HeroSection({
 
     return (
         <section
-            className="relative w-[calc(100%-64px)] overflow-hidden select-none mx-[32px] rounded-[25px]"
+            className="relative w-[calc(100%-64px)] max-sm:w-[calc(100%-32px)] overflow-hidden select-none mx-[32px] max-sm:mx-4 rounded-[25px]"
             style={{ height: 'calc(100vh - 6.5rem)', marginTop: '6.5rem', marginBottom: '12px' }}
         >
             {/* Intro — the whole background opens from a smaller rounded window in the
@@ -109,7 +109,7 @@ export default function HeroSection({
 
             {/* ── Hero content ──────────────────────────────────────────────────── */}
             <div
-                className="w-full absolute inset-0 flex flex-col items-center justify-center px-[64px]"
+                className="w-full absolute inset-0 flex flex-col items-center justify-center px-[64px] max-md:justify-start max-md:pt-10 max-sm:px-5"
                 dir={lang === 'ar' ? 'rtl' : 'ltr'}
             >
                 <div className="w-full flex items-center justify-center">
@@ -120,7 +120,7 @@ export default function HeroSection({
                         transition={{ ...INTRO.logo, ease: EASE }}
                     >
                         <div className="w-full flex w-full justify-start">
-                            <Image src="/logo/logo.svg" alt="Logo" width={385} height={175} />
+                            <Image src="/logo/logo.svg" alt="Logo" width={385} height={175} className="max-md:h-auto max-md:w-[260px] max-sm:w-[200px]" />
 
                         </div>
                     </motion.div>
@@ -130,10 +130,10 @@ export default function HeroSection({
             {/* Glass boxes — pinned to the bottom-left corner, 32px from both edges.
                 dir="ltr" keeps them anchored left in both Arabic and English. */}
             <div
-                className="absolute left-[32px] right-[32px] bottom-[32px] flex justify-start gap-6"
+                className="absolute left-[32px] right-[32px] bottom-[32px] flex justify-start gap-6 max-md:flex-col max-md:gap-3 max-sm:left-4 max-sm:right-4 max-sm:bottom-4"
                 dir="ltr"
             >
-                <motion.div className="h-[200px] w-[25%] rounded-[25px] p-[12px]"
+                <motion.div className="h-[200px] w-[25%] max-lg:w-[45%] max-md:h-auto max-md:w-full max-md:py-4 rounded-[25px] p-[12px]"
                     initial={{ opacity: 0, y: 40 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ ...INTRO.leftBox, ease: EASE }}
@@ -158,7 +158,7 @@ export default function HeroSection({
                     </div>
                 </motion.div>
 
-                <motion.div className="h-[200px] w-[25%] rounded-[25px] p-[12px]"
+                <motion.div className="h-[200px] w-[25%] max-lg:w-[45%] max-md:h-[180px] max-md:w-full rounded-[25px] p-[12px]"
                     initial={{ opacity: 0, y: 40 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ ...INTRO.rightBox, ease: EASE }}

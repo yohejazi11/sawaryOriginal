@@ -33,7 +33,7 @@ export default function HeroVideo({ videoId, title }: { videoId: string; title: 
                 src={`https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`}
                 alt=""
                 fill
-                sizes="25vw"
+                sizes="(max-width: 767px) 100vw, (max-width: 1023px) 45vw, 25vw"
                 className="object-cover"
             />
             <span className="absolute inset-0 flex items-center justify-center bg-black/20 transition-colors duration-300 group-hover:bg-black/30">

@@ -33,7 +33,7 @@ export default function ContactClient() {
 
   return (
     <main className="flex min-h-screen flex-col bg-[#F4EFE3] text-[#343229]" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
-      <section className="flex w-full flex-col px-[32px] pb-[96px] pt-36">
+      <section className="flex w-full flex-col px-[32px] max-sm:px-4 pb-[96px] pt-36 max-sm:pt-28">
 
         {/* ── Header ──────────────────────────────────────────────────────── */}
         <motion.h1

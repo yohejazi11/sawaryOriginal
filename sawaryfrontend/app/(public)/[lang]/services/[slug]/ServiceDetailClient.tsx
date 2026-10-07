@@ -36,7 +36,7 @@ export default function ServiceDetailClient({
     <main className="flex min-h-screen flex-col bg-[#F4EFE3] text-[#343229]" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
 
       {/* ── Section 1: Header + framed cover ─────────────────────────────── */}
-      <section className="flex w-full flex-col gap-[48px] px-[32px] pb-[64px] pt-36">
+      <section className="flex w-full flex-col gap-[48px] px-[32px] max-sm:px-4 pb-[64px] pt-36 max-sm:pt-28">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, ease: EASE }}>
           <Link
             href={localizedHref(lang, '/services')}
@@ -89,7 +89,7 @@ export default function ServiceDetailClient({
 
       {/* ── Section 2: Statement ──────────────────────────────────────────── */}
       {description && (
-        <section className="px-[32px] py-[64px]">
+        <section className="px-[32px] max-sm:px-4 py-[64px]">
           <Reveal>
             <p className="max-w-[60rem] text-[20px] leading-loose md:text-[24px]">{description}</p>
           </Reveal>
@@ -97,7 +97,7 @@ export default function ServiceDetailClient({
       )}
 
       {/* ── Section 3: What the service includes ──────────────────────────── */}
-      <section className="px-[32px] py-[64px]">
+      <section className="px-[32px] max-sm:px-4 py-[64px]">
         <Reveal className="mb-[48px]">
           <h2 className="text-[clamp(2rem,5vw,4rem)] leading-tight">{t('serviceDetail.includes')}</h2>
         </Reveal>
@@ -150,7 +150,7 @@ export default function ServiceDetailClient({
       </section>
 
       {/* ── Section 4: Call to action — dark block for contrast ───────────── */}
-      <section className="px-[32px] py-[64px]">
+      <section className="px-[32px] max-sm:px-4 py-[64px]">
         <Reveal className="flex w-full items-center justify-between gap-[32px] rounded-[25px] bg-[#343229] px-8 py-12 text-[#F4EFE3] max-md:flex-col max-md:items-start md:px-14">
           <div className="flex flex-col gap-4">
             <h2 className="text-[clamp(1.75rem,4vw,3rem)] leading-tight">{t('serviceDetail.ctaTitle')}</h2>
@@ -167,7 +167,7 @@ export default function ServiceDetailClient({
 
       {/* ── Section 5: Other services ─────────────────────────────────────── */}
       {others.length > 0 && (
-        <section className="px-[32px] pb-[96px] pt-[64px]">
+        <section className="px-[32px] max-sm:px-4 pb-[96px] pt-[64px]">
           <div className="flex w-full items-center justify-between gap-[32px] max-sm:flex-col max-sm:items-start">
             <Reveal>
               <h2 className="text-[clamp(2rem,5vw,4rem)] leading-tight">{t('serviceDetail.otherServices')}</h2>

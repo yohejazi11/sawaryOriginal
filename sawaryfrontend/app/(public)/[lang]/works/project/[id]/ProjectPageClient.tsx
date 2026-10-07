@@ -95,7 +95,7 @@ export default function ProjectPageClient({
     <main className="flex min-h-screen flex-col" style={{ background: DARK, color: CREAM }} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
 
       {/* ── Section 1: Header + framed cover ─────────────────────────────── */}
-      <section className="flex w-full flex-col gap-[48px] px-[32px] pb-[64px] pt-36">
+      <section className="flex w-full flex-col gap-[48px] px-[32px] max-sm:px-4 pb-[64px] pt-36 max-sm:pt-28">
         <motion.button
           onClick={handleBack}
           className="flex w-fit items-center gap-2 rounded-[15px] border border-[#F4EFE3]/60 px-6 py-2 text-[16px] transition-all duration-300 hover:bg-[#F4EFE3] hover:text-[#343229]"
@@ -165,7 +165,7 @@ export default function ProjectPageClient({
 
       {/* ── Section 2: Project Statement ──────────────────────────────────── */}
       {description && (
-        <section className="px-[32px] py-[64px]">
+        <section className="px-[32px] max-sm:px-4 py-[64px]">
           <div className="grid w-full grid-cols-1 items-center gap-12 md:grid-cols-[1fr_auto]">
             <Reveal>
               <p className="text-[20px] leading-loose text-[#F4EFE3]/90 md:text-[24px]">{description}</p>
@@ -188,7 +188,7 @@ export default function ProjectPageClient({
 
       {/* ── Section 4: Project Gallery (Justified Rows — no cropping) ──────── */}
       {groupsWithOffset.map(group => group.images.length > 0 && (
-        <section key={group.id ?? 'ungrouped'} className="px-[32px] py-[48px]">
+        <section key={group.id ?? 'ungrouped'} className="px-[32px] max-sm:px-4 py-[48px]">
           {group.name && (
             <Reveal className="mb-[32px]">
               <h2 className="text-[clamp(1.75rem,4vw,3rem)] leading-tight">{group.name}</h2>
@@ -210,7 +210,7 @@ export default function ProjectPageClient({
 
       {/* ── Section 5: Related Projects ───────────────────────────────────── */}
       {related.length > 0 && (
-        <section className="px-[32px] py-[96px]">
+        <section className="px-[32px] max-sm:px-4 py-[96px]">
           <div className="flex w-full items-center justify-between gap-[32px] max-sm:flex-col max-sm:items-start">
             <Reveal>
               <h2 className="text-[clamp(2rem,5vw,4rem)] leading-tight">{t('projectDetail.relatedProjects')}</h2>
@@ -357,7 +357,7 @@ function DetailsBar({ project, imageCount }: { project: Project; imageCount: num
   ]
 
   return (
-    <section className="px-[32px] py-[32px]">
+    <section className="px-[32px] max-sm:px-4 py-[32px]">
       <Reveal className="flex w-full flex-wrap overflow-hidden rounded-[25px] border border-[#F4EFE3]/40">
         {stats.map(({ label, value }, i) => (
           <div

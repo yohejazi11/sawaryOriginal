@@ -51,7 +51,7 @@ export default function Header() {
       initial={{ y: -16, opacity: 0 }}
       animate={{ y: 0,   opacity: 1  }}
       transition={{ duration: 0.7, ease: EASE, delay: isHome ? HOME_INTRO_DELAY : 0 }}
-      className="fixed inset-x-0 top-0 mx-[32px] mt-[12px] z-50"
+      className="fixed inset-x-0 top-0 mx-[32px] max-sm:mx-4 mt-[12px] z-50"
     >
       {/* Glass band — always present so nav stays readable over any hero image,
           strengthens further on scroll. Never fully transparent — the fixed header
@@ -86,7 +86,7 @@ export default function Header() {
       {/* textShadow cascades to every label/link below — a second line of defense
           for contrast on top of the glass band, regardless of what image is behind it. */}
       <div
-        className="relative mx-auto flex h-20 max-w-7xl items-center justify-between px-8 lg:px-20"
+        className="relative mx-auto flex h-20 max-sm:h-16 max-w-7xl items-center justify-between px-8 max-sm:px-5 lg:px-20"
         dir={lang === 'ar' ? 'rtl' : 'ltr'}
         style={{ textShadow: '0 1px 6px rgba(0,0,0,0.4)' }}
       >

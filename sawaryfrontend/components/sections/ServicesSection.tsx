@@ -67,7 +67,7 @@ export default function ServicesSection({
 
       {/* ── Section header ──────────────────────────────────────────────────── */}
       <div
-        className={`${isPage ? 'pt-36 pb-14' : 'py-14'} px-[32px]`}
+        className={`${isPage ? 'pt-36 max-sm:pt-28 pb-14' : 'py-14'} px-[32px] max-sm:px-4`}
         style={{ background: '#F4EFE3' }}
       >
         <Heading
@@ -84,7 +84,7 @@ export default function ServicesSection({
 
       {/* ── Two cinematic panels ─────────────────────────────────────────────── */}
       <div
-        className="flex w-full h-fit flex-col gap-[128px] overflow-hidden bg-[#F4EFE3] py-[96px] px-[32px] "
+        className="flex w-full h-fit flex-col gap-[128px] max-md:gap-24 overflow-hidden bg-[#F4EFE3] py-[96px] max-md:pt-20 max-md:pb-12 px-[32px] max-sm:px-4 "
         // style={{ minHeight: 'max(600px, 80vh)' }}
       >
         {sections.length > 0
@@ -122,10 +122,10 @@ export default function ServicesSection({
 
       {/* ── View all (home page only) ────────────────────────────────────────── */}
       {!isPage && (
-        <div className="flex justify-center bg-[#F4EFE3] pb-[96px] px-[32px]">
+        <div className="flex justify-center bg-[#F4EFE3] pb-[96px] max-md:pb-16 px-[32px] max-sm:px-4">
           <Link
             href={localizedHref(lang, '/services')}
-            className="flex w-fit items-center gap-3 rounded-[15px] border border-[#343229] px-[32px] py-2 text-[24px] font-medium text-[#343229] transition-all duration-300 hover:bg-[#343229] hover:text-white"
+            className="flex w-fit items-center gap-3 rounded-[15px] border border-[#343229] px-[32px] py-2 text-[24px] max-sm:text-[18px] font-medium text-[#343229] transition-all duration-300 hover:bg-[#343229] hover:text-white"
           >
             {t('homeServices.viewAll')}
           </Link>

@@ -153,7 +153,7 @@ export default function AboutClient({ content }: { content: AboutContent }) {
     <main className="flex min-h-screen flex-col bg-[#F4EFE3] text-[#343229]" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
 
       {/* ── Section 1: Hero — title + statement, framed cover ─────────────── */}
-      <section className="flex w-full flex-col gap-[48px] px-[32px] pb-[64px] pt-36">
+      <section className="flex w-full flex-col gap-[48px] px-[32px] max-sm:px-4 pb-[64px] pt-36 max-sm:pt-28">
         <div className="flex w-full items-end justify-between gap-[32px] max-md:flex-col max-md:items-start">
           <motion.h1
             className="font-display shrink-0 text-[clamp(3rem,8vw,6rem)] font-bold leading-tight"
@@ -200,7 +200,7 @@ export default function AboutClient({ content }: { content: AboutContent }) {
       </section>
 
       {/* ── Section 2: Vision — outlined title beside the body ────────────── */}
-      <section className="px-[32px] py-[64px]">
+      <section className="px-[32px] max-sm:px-4 py-[64px]">
         <Reveal className="mb-[48px]">
           <span className="block w-fit rounded-[15px] border border-[#343229] px-6 py-2 text-[16px]">
             {pick(content.sectionLabelWhoWeAreAr, content.sectionLabelWhoWeAreEn)}
@@ -225,7 +225,7 @@ export default function AboutClient({ content }: { content: AboutContent }) {
 
       {/* ── Section 3: Stats — one bordered bar, like the project details bar ── */}
       {content.statItems.length > 0 && (
-        <section className="px-[32px] py-[64px]">
+        <section className="px-[32px] max-sm:px-4 py-[64px]">
           <SectionHeader title={pick(content.sectionLabelStatsAr, content.sectionLabelStatsEn)} />
           <Reveal className="grid w-full grid-cols-1 overflow-hidden rounded-[25px] border border-[#343229] sm:grid-cols-3">
             {content.statItems.map((item, i) => (
@@ -249,7 +249,7 @@ export default function AboutClient({ content }: { content: AboutContent }) {
       )}
 
       {/* ── Section 4: Team — framed org chart ────────────────────────────── */}
-      <section className="px-[32px] py-[64px]">
+      <section className="px-[32px] max-sm:px-4 py-[64px]">
         <SectionHeader
           label={pick(content.sectionLabelTeamStructureAr, content.sectionLabelTeamStructureEn)}
           title={pick(content.teamTitleAr, content.teamTitleEn)}
@@ -270,7 +270,7 @@ export default function AboutClient({ content }: { content: AboutContent }) {
 
       {/* ── Section 5: FAQ ────────────────────────────────────────────────── */}
       {faqItems.length > 0 && (
-        <section className="px-[32px] py-[64px]">
+        <section className="px-[32px] max-sm:px-4 py-[64px]">
           <SectionHeader
             label={pick(content.sectionLabelFaqAr, content.sectionLabelFaqEn)}
             title={pick(content.faqTitleAr, content.faqTitleEn)}
@@ -291,7 +291,7 @@ export default function AboutClient({ content }: { content: AboutContent }) {
       )}
 
       {/* ── Section 6: Location — map beside the building photo ───────────── */}
-      <section className="px-[32px] pb-[96px] pt-[64px]">
+      <section className="px-[32px] max-sm:px-4 pb-[96px] pt-[64px]">
         <SectionHeader
           label={pick(content.sectionLabelVisitUsAr, content.sectionLabelVisitUsEn)}
           title={pick(content.locationTitleAr, content.locationTitleEn)}

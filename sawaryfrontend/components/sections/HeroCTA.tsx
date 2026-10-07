@@ -67,13 +67,13 @@ export default function HeroCTA() {
             {/* Top rule */}
             <div className="absolute inset-x-0 top-0 h-px bg-brand-primary/45" />
 
-            <div className="relative mx-auto w-full max-w-7xl px-8 py-8 lg:px-20">
+            <div className="relative mx-auto w-full max-w-7xl px-8 max-sm:px-4 py-8 lg:px-20">
                 <div className="flex flex-row gap-6 max-sm:flex-col" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
 
                     {/* ── Col 1: 7 000 clients ──────────────────────────────── */}
                     <motion.div
                         ref={clients.ref}
-                        className="relative flex flex-1  items-end justify-center gap-3 overflow-hidden  p-8"
+                        className="relative flex flex-1  items-end justify-center gap-3 overflow-hidden  p-8 max-sm:flex-wrap max-sm:p-3"
                         variants={col}
                         initial="hidden"
                         whileInView="show"
@@ -81,7 +81,7 @@ export default function HeroCTA() {
                     >
                         <motion.span
                             variants={up}
-                            className="text-2xl font-light tracking-[0.28em] text-[#343229] uppercase"
+                            className="text-2xl max-sm:text-lg font-light tracking-[0.28em] max-sm:tracking-[0.12em] text-[#343229] uppercase"
                         >
                             {t('heroCTA.clientsLabel')}
                         </motion.span>
@@ -102,7 +102,7 @@ export default function HeroCTA() {
 
                         <motion.span
                             variants={up}
-                            className="text-2xl font-light tracking-[0.28em] text-[#343229] uppercase"
+                            className="text-2xl max-sm:text-lg font-light tracking-[0.28em] max-sm:tracking-[0.12em] text-[#343229] uppercase"
                         >
                             {t('heroCTA.clientsUnit')}
                         </motion.span>
@@ -113,7 +113,7 @@ export default function HeroCTA() {
                     {/* ── Col 2: 12 years ───────────────────────────────────── */}
                     <motion.div
                         ref={years.ref}
-                        className="relative flex flex-1 items-end justify-center gap-3 overflow-hidden  p-8"
+                        className="relative flex flex-1 items-end justify-center gap-3 overflow-hidden  p-8 max-sm:flex-wrap max-sm:p-3"
                         variants={col}
                         initial="hidden"
                         whileInView="show"
@@ -121,7 +121,7 @@ export default function HeroCTA() {
                     >
                         <motion.span
                             variants={up}
-                            className="text-2xl font-light tracking-[0.28em] text-[#343229] uppercase"
+                            className="text-2xl max-sm:text-lg font-light tracking-[0.28em] max-sm:tracking-[0.12em] text-[#343229] uppercase"
                         >
                             {t('heroCTA.yearsLabel')}
                         </motion.span>
@@ -142,7 +142,7 @@ export default function HeroCTA() {
 
                         <motion.span
                             variants={up}
-                            className="text-2xl font-light tracking-[0.28em] text-[#343229] uppercase"
+                            className="text-2xl max-sm:text-lg font-light tracking-[0.28em] max-sm:tracking-[0.12em] text-[#343229] uppercase"
                         >
                             {t('heroCTA.yearsUnit')}
                         </motion.span>

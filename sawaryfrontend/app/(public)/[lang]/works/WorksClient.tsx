@@ -67,7 +67,7 @@ export default function WorksClient({
 
     return (
         <main className="flex min-h-screen flex-col bg-[#F4EFE3]" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
-            <section className="flex w-full flex-col px-[32px] pb-[96px] pt-36">
+            <section className="flex w-full flex-col px-[32px] max-sm:px-4 pb-[96px] pt-36 max-sm:pt-28">
                 {/* ── Header ──────────────────────────────────────────────────────── */}
                 <div className="flex w-full items-center justify-between gap-[32px] max-sm:flex-col max-sm:items-start">
                     <Reveal className="text-[#343229]">

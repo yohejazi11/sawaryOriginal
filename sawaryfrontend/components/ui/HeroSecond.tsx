@@ -55,14 +55,14 @@ export default function HeroSecond({
 
     return (
         <section
-            className="relative w-[calc(100%-64px)] overflow-hidden select-none mx-[32px] rounded-[25px]"
+            className="relative w-[calc(100%-64px)] max-sm:w-[calc(100%-32px)] overflow-hidden select-none mx-[32px] max-sm:mx-4 rounded-[25px]"
             style={{ height: 'fit-content', marginTop: '6.5rem', marginBottom: '12px' }}
         // style={{ height: 'calc(100vh - 6.5rem)', marginTop: '6.5rem', marginBottom: '12px' }}
 
         >
             <MotionConfig reducedMotion="user">
             <motion.div
-                className="w-full flex gap-[32px]"
+                className="w-full flex gap-[32px] max-md:flex-col max-md:gap-4"
                 variants={row}
                 initial="hidden"
                 whileInView="show"
@@ -70,7 +70,7 @@ export default function HeroSecond({
             >
                 {/* self-start: don't stretch to the right column's height — the box must keep
                     the shape's 876/644 ratio so its bottom is the image's bottom. */}
-                <div className="relative w-[65%] aspect-[876/644] self-start">
+                <div className="relative w-[65%] max-md:w-full aspect-[876/644] self-start">
                     {/* الصورة مقصوصة على شكل المسار */}
                     <motion.div
                         variants={shapeReveal}
@@ -90,7 +90,7 @@ export default function HeroSecond({
                                 alt=""
                                 fill
                                 className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                                sizes="65vw"
+                                sizes="(max-width: 767px) 100vw, 65vw"
                             />
                         </motion.div>
                     </motion.div>
@@ -125,18 +125,18 @@ export default function HeroSecond({
                     </div>
                 </div> */}
 
-                <motion.div variants={column} className="w-[35%] flex flex-col justify-between gap-3">
+                <motion.div variants={column} className="w-[35%] max-md:w-full flex flex-col justify-between gap-3">
                     <motion.div variants={cardRise} className="w-[100%] h-fit flex flex-col gap-3 bg-[#F4EFE3] rounded-[25px] p-2">
                         <motion.button variants={item} className="w-fit  border border-[#343229] rounded-[25px] text-[#343229] px-8 py-2 text-[15px]">
                             التصميم
                         </motion.button>
 
-                        <motion.p variants={item} className="w-[50%]  text-[#343229] text-[20px]">نصمّم لك مساحة تحكي قصة ذوقك في كل تفصيلة</motion.p>
+                        <motion.p variants={item} className="w-[50%] max-lg:w-full text-[#343229] text-[20px] max-sm:text-[17px]">نصمّم لك مساحة تحكي قصة ذوقك في كل تفصيلة</motion.p>
 
-                        <motion.p variants={item} className="w-[50%] text-[#343229] text-[40px] font-bold">نرسم ملامح الأناقة</motion.p>
+                        <motion.p variants={item} className="w-[50%] max-lg:w-full text-[#343229] text-[40px] max-lg:text-[30px] max-sm:text-[26px] font-bold">نرسم ملامح الأناقة</motion.p>
                     </motion.div>
 
-                    <motion.div variants={cardCurtain} className="group relative w-[100%] h-[350px] rounded-[25px] overflow-hidden">
+                    <motion.div variants={cardCurtain} className="group relative w-[100%] h-[350px] max-md:h-[260px] rounded-[25px] overflow-hidden">
                         {/* الصورة الخلفية */}
                         <motion.div variants={zoomOut} className="absolute inset-0">
                             <Image
@@ -144,7 +144,7 @@ export default function HeroSecond({
                                 alt=""
                                 fill
                                 className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                                sizes="35vw"
+                                sizes="(max-width: 767px) 100vw, 35vw"
                             />
                         </motion.div>
                         <div className="absolute inset-0 bg-black/20"></div>
@@ -153,7 +153,7 @@ export default function HeroSecond({
                             <motion.button variants={item} className="w-fit  border border-[#F4EFE3] rounded-[25px] text-[#F4EFE3] px-8 py-2 text-[15px]">
                                 تنفيذنا
                             </motion.button>
-                            <motion.p variants={item} className="w-[50%]  text-[#F4EFE3] text-[20px]">ننفّذ رؤيتك بأدق التفاصيل وأجود الخامات لتعيش المساحة كما تخيّلتها تماماً</motion.p>
+                            <motion.p variants={item} className="w-[50%] max-lg:w-[80%] max-sm:w-full text-[#F4EFE3] text-[20px] max-sm:text-[17px]">ننفّذ رؤيتك بأدق التفاصيل وأجود الخامات لتعيش المساحة كما تخيّلتها تماماً</motion.p>
                         </div>
                     </motion.div>
                 </motion.div>

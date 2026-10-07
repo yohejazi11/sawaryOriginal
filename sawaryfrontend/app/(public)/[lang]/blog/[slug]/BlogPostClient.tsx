@@ -31,7 +31,7 @@ export default function BlogPostClient({ post, more }: { post: ApiBlogPost; more
     <main className="flex min-h-screen flex-col bg-[#F4EFE3] text-[#343229]" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
 
       {/* ── Section 1: Header + framed cover ─────────────────────────────── */}
-      <section className="flex w-full flex-col gap-[48px] px-[32px] pb-[64px] pt-36">
+      <section className="flex w-full flex-col gap-[48px] px-[32px] max-sm:px-4 pb-[64px] pt-36 max-sm:pt-28">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, ease: EASE }}>
           <Link
             href={localizedHref(lang, '/blog')}
@@ -95,7 +95,7 @@ export default function BlogPostClient({ post, more }: { post: ApiBlogPost; more
       </section>
 
       {/* ── Section 2: Article body ───────────────────────────────────────── */}
-      <article className="px-[32px] py-[48px]">
+      <article className="px-[32px] max-sm:px-4 py-[48px]">
         <div className="mx-auto flex max-w-[48rem] flex-col gap-6">
           {blocks.map((block, i) => (
             <Reveal key={i}>
@@ -115,7 +115,7 @@ export default function BlogPostClient({ post, more }: { post: ApiBlogPost; more
 
       {/* ── Section 3: More articles ──────────────────────────────────────── */}
       {more.length > 0 && (
-        <section className="px-[32px] pb-[96px] pt-[64px]">
+        <section className="px-[32px] max-sm:px-4 pb-[96px] pt-[64px]">
           <div className="flex w-full items-center justify-between gap-[32px] max-sm:flex-col max-sm:items-start">
             <Reveal>
               <h2 className="text-[clamp(2rem,5vw,4rem)] leading-tight">{t('blog.morePosts')}</h2>
