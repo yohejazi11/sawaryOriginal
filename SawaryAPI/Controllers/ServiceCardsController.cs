@@ -18,7 +18,10 @@ public class ServiceCardsController(AppDbContext db) : ControllerBase
         var card = await db.ServiceCards.FindAsync(id);
         if (card is null) return NotFound();
 
-        if (dto.Title is not null) card.Title = dto.Title;
+        if (dto.TitleAr is not null) card.TitleAr = dto.TitleAr;
+        if (dto.TitleEn is not null) card.TitleEn = dto.TitleEn;
+        if (dto.DescriptionAr is not null) card.DescriptionAr = dto.DescriptionAr;
+        if (dto.DescriptionEn is not null) card.DescriptionEn = dto.DescriptionEn;
         if (dto.OrderIndex.HasValue) card.OrderIndex = dto.OrderIndex.Value;
 
         await db.SaveChangesAsync();

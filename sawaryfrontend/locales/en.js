@@ -4,7 +4,18 @@ const en = {
     works: 'Works',
     about: 'About',
     services: 'Services',
+    blog: 'Blog',
     contact: 'Contact',
+  },
+  blog: {
+    title: 'Blog',
+    intro: 'Ideas, tips and inspiration on interior design and execution from the Sawary team.',
+    emptyTitle: 'No articles yet',
+    emptyBody: 'We are working on our first articles — check back soon.',
+    readMore: 'Read article',
+    minRead: 'min read',
+    back: 'All articles',
+    morePosts: 'More articles',
   },
   common: {
     learnMore: 'Learn More',
@@ -69,6 +80,8 @@ const en = {
     badgeAfter: 'After',
     ctaConsultation: 'Request a Consultation',
     ctaGallery: 'View Our Works',
+    boxTitle: 'We turn spaces into stories',
+    boxBody: 'Complete design, décor and finishing that unites beautiful details with quality execution.',
   },
   about: {
     sectionLabels: {
@@ -289,12 +302,6 @@ const en = {
     design: { subtitle: 'Comprehensive interior design, 3D modeling, material & color selection' },
     execution: { subtitle: 'Precise execution under integrated engineering supervision for commercial & residential projects' },
   },
-  servicesCatalog: {
-    eyebrow: 'Service Catalog',
-    title: 'All Our Services',
-    comingSoonTitle: 'Coming Soon',
-    comingSoonBody: "We're working on this section's content — stay tuned",
-  },
   homeServices: {
     heading: 'Our Services',
     subheading: 'We design and build .. homes like your dreams',
@@ -306,6 +313,18 @@ const en = {
       title: 'Design',
       body: 'We design your next destination with the utmost care, whether a home that radiates warmth or a commercial space that reflects your identity, applying the finest modern standards for distinction and comfort.',
     },
+    learnMore:'Learn More',
+    viewAll: 'View All Services',
+    includes: 'Includes',
+  },
+  serviceDetail: {
+    back: 'All services',
+    includes: 'What the service includes',
+    empty: 'Details for this service are coming soon.',
+    ctaTitle: 'Ready to start your project?',
+    ctaBody: 'Get in touch and we will set up a consultation to understand your needs and propose the right solution for your space.',
+    ctaButton: 'Contact us',
+    otherServices: 'Other services',
   },
   notFound: {
     code: '404',
@@ -314,6 +333,7 @@ const en = {
     backHome: 'Back to Home',
   },
   projectDetail: {
+    featured: 'Featured',
     back: 'Back',
     relatedProjects: 'Related Projects',
     dragHint: 'Drag',

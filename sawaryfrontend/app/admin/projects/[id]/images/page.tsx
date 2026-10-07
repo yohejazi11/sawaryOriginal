@@ -9,7 +9,7 @@ import {
   Draggable,
   DropResult,
 } from '@hello-pangea/dnd'
-import { apiGet, apiPost, apiPut, apiDelete, apiPatch, apiUpload } from '@/lib/api'
+import { apiGet, apiPost, apiPut, apiDelete, apiPatch, apiUpload, apiFetch } from '@/lib/api'
 
 interface ProjectImage {
   id: number
@@ -65,6 +65,9 @@ export default function ProjectImagesPage({ params }: { params: Promise<{ id: st
   const [editingSectionId, setEditingSectionId] = useState<number | null>(null)
   const [editNameAr, setEditNameAr] = useState('')
   const [editNameEn, setEditNameEn] = useState('')
+
+  const [selected, setSelected] = useState<Set<number>>(new Set())
+  const [bulkDeleting, setBulkDeleting] = useState(false)
 
   const load = useCallback(async () => {
     const proj = await apiGet<Project>(`/api/projects/${id}`).catch(() => null)
@@ -139,6 +142,45 @@ export default function ProjectImagesPage({ params }: { params: Promise<{ id: st
     if (!confirm('حذف هذه الصورة؟')) return
     await apiDelete(`/api/images/${imgId}`)
     setImages(prev => prev.filter(i => i.id !== imgId))
+    setSelected(prev => { const next = new Set(prev); next.delete(imgId); return next })
+  }
+
+  // ── Multi-select ──────────────────────────────────────────────────────────
+  function toggleSelect(imgId: number) {
+    setSelected(prev => {
+      const next = new Set(prev)
+      if (next.has(imgId)) next.delete(imgId)
+      else next.add(imgId)
+      return next
+    })
+  }
+
+  // Selects every image in the list, or clears them if they're all selected already.
+  function toggleSelectMany(ids: number[]) {
+    setSelected(prev => {
+      const next = new Set(prev)
+      const allSelected = ids.every(i => next.has(i))
+      ids.forEach(i => (allSelected ? next.delete(i) : next.add(i)))
+      return next
+    })
+  }
+
+  async function deleteSelected() {
+    const ids = [...selected]
+    if (ids.length === 0) return
+    if (!confirm(`حذف ${ids.length} صورة نهائياً؟ لا يمكن التراجع عن هذا.`)) return
+    setBulkDeleting(true)
+    try {
+      const res = await apiFetch('/api/images/bulk-delete', { method: 'POST', body: JSON.stringify({ ids }) })
+      if (!res.ok) throw new Error()
+      setSelected(new Set())
+      // Reload rather than filter locally: the cover may have moved to another image.
+      await load()
+    } catch {
+      alert('تعذّر حذف الصور المحددة، يرجى المحاولة مجدداً.')
+    } finally {
+      setBulkDeleting(false)
+    }
   }
 
   async function setCover(imgId: number) {
@@ -365,11 +407,54 @@ export default function ProjectImagesPage({ params }: { params: Promise<{ id: st
       {/* Reorderable image groups */}
       {images.length > 0 && (
         <>
-          <p className="mb-4 text-xs text-[rgb(240,238,232)]/50">اسحب الصور لإعادة ترتيبها داخل نفس القسم. انقر على الصورة لتعيينها كغلاف.</p>
+          <p className="mb-4 text-xs text-[rgb(240,238,232)]/50">
+            اسحب الصور لإعادة ترتيبها داخل نفس القسم. انقر على المربع في زاوية الصورة لتحديدها، ثم احذف المحدد دفعة واحدة.
+          </p>
+
+          {/* Selection toolbar — sticks to the top while scrolling through long galleries */}
+          <div
+            className="sticky top-0 z-20 mb-6 flex flex-wrap items-center gap-3 rounded-sm border border-brand-primary/20 px-4 py-3"
+            style={{ background: 'rgb(38,39,35)' }}
+          >
+            <button
+              onClick={() => toggleSelectMany(images.map(i => i.id))}
+              className="rounded-sm border border-brand-primary/30 px-3 py-1.5 text-xs text-[rgb(240,238,232)]/80 hover:border-brand-primary"
+            >
+              {images.length > 0 && images.every(i => selected.has(i.id)) ? 'إلغاء تحديد الكل' : `تحديد الكل (${images.length})`}
+            </button>
+            {selected.size > 0 && (
+              <>
+                <span className="text-xs text-brand-primary">تم تحديد {selected.size} صورة</span>
+                <button
+                  onClick={deleteSelected}
+                  disabled={bulkDeleting}
+                  className="rounded-sm px-4 py-1.5 text-xs font-medium disabled:opacity-60"
+                  style={{ background: '#7a2020', color: '#fca5a5' }}
+                >
+                  {bulkDeleting ? 'جارٍ الحذف…' : `حذف المحدد (${selected.size})`}
+                </button>
+                <button
+                  onClick={() => setSelected(new Set())}
+                  className="text-xs text-[rgb(240,238,232)]/60 hover:text-[rgb(240,238,232)] hover:underline"
+                >
+                  إلغاء التحديد
+                </button>
+              </>
+            )}
+          </div>
+
           <DragDropContext onDragEnd={onDragEnd}>
             {groups.map(group => group.images.length > 0 && (
               <div key={group.key} className="mb-8">
-                <h3 className="mb-3 text-sm font-bold text-brand-primary">{group.label}</h3>
+                <div className="mb-3 flex items-center gap-3">
+                  <h3 className="text-sm font-bold text-brand-primary">{group.label}</h3>
+                  <button
+                    onClick={() => toggleSelectMany(group.images.map(i => i.id))}
+                    className="text-xs text-[rgb(240,238,232)]/50 hover:text-brand-primary hover:underline"
+                  >
+                    {group.images.every(i => selected.has(i.id)) ? 'إلغاء تحديد القسم' : 'تحديد القسم'}
+                  </button>
+                </div>
                 <Droppable droppableId={group.key} direction="horizontal">
                   {provided => (
                     <div
@@ -379,6 +464,7 @@ export default function ProjectImagesPage({ params }: { params: Promise<{ id: st
                     >
                       {group.images.map((img, index) => {
                         const isCover = img.url === project.coverImageUrl
+                        const isSelected = selected.has(img.id)
                         return (
                           <Draggable key={img.id} draggableId={String(img.id)} index={index}>
                             {(drag, snapshot) => (
@@ -388,7 +474,8 @@ export default function ProjectImagesPage({ params }: { params: Promise<{ id: st
                                 {...drag.dragHandleProps}
                                 className="group relative h-32 w-32 overflow-hidden rounded-sm border transition-colors"
                                 style={{
-                                  borderColor: isCover ? 'rgb(140,112,76)' : 'rgba(140,112,76,0.2)',
+                                  borderColor: isSelected ? '#e07070' : isCover ? 'rgb(140,112,76)' : 'rgba(140,112,76,0.2)',
+                                  borderWidth: isSelected ? 2 : 1,
                                   opacity: snapshot.isDragging ? 0.8 : 1,
                                   ...drag.draggableProps.style,
                                 }}
@@ -401,11 +488,30 @@ export default function ProjectImagesPage({ params }: { params: Promise<{ id: st
                                   sizes="128px"
                                 />
 
+                                {isSelected && <div className="pointer-events-none absolute inset-0 bg-[#7a2020]/35" />}
+
                                 {isCover && (
                                   <span className="absolute right-1 top-1 rounded-sm bg-brand-primary px-1.5 py-0.5 text-[10px] text-white">
                                     غلاف
                                   </span>
                                 )}
+
+                                {/* Select checkbox — above the hover actions so it's always clickable */}
+                                <button
+                                  type="button"
+                                  role="checkbox"
+                                  aria-checked={isSelected}
+                                  aria-label="تحديد الصورة"
+                                  onClick={e => { e.stopPropagation(); toggleSelect(img.id) }}
+                                  className="absolute left-1 top-1 z-10 flex h-6 w-6 items-center justify-center rounded-sm border-2 text-xs font-bold transition-colors"
+                                  style={{
+                                    borderColor: isSelected ? '#e07070' : 'rgba(255,255,255,0.85)',
+                                    background: isSelected ? '#e07070' : 'rgba(0,0,0,0.45)',
+                                    color: '#fff',
+                                  }}
+                                >
+                                  {isSelected ? '✓' : ''}
+                                </button>
 
                                 {/* Hover actions */}
                                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-black/60 p-1.5 opacity-0 transition-opacity group-hover:opacity-100">

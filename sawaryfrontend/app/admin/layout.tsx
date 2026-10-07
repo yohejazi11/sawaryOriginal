@@ -54,6 +54,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: '/admin/tags',       label: 'التاقات'      },
     { href: '/admin/projects',   label: 'المشاريع'    },
     { href: '/admin/services',   label: 'الخدمات'     },
+    { href: '/admin/blog',       label: 'المدونة'     },
     { href: '/admin/about',      label: 'صفحة من نحن' },
     { href: '/admin/contact',    label: 'التواصل والسوشال' },
   ]

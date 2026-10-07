@@ -39,8 +39,10 @@ public class ProjectsController(AppDbContext db) : ControllerBase
         if (featured.HasValue)
             query = query.Where(p => p.IsFeatured == featured.Value);
 
+        // Featured projects always lead the list; manual order applies within each group.
         var projects = await query
-            .OrderBy(p => p.OrderIndex)
+            .OrderByDescending(p => p.IsFeatured)
+            .ThenBy(p => p.OrderIndex)
             .ThenByDescending(p => p.CreatedAt)
             .Select(p => new ProjectListDto
             {
@@ -212,6 +214,24 @@ public class ProjectsController(AppDbContext db) : ControllerBase
         if (project is null) return NotFound();
 
         project.OrderIndex = dto.OrderIndex;
+        await db.SaveChangesAsync();
+        return NoContent();
+    }
+
+    // POST /api/projects/reorder — admin only. Body { ids: [...] } in the desired order;
+    // each project's OrderIndex becomes its position in the list, saved in one round trip.
+    // Projects not in the list keep their current OrderIndex.
+    [Authorize]
+    [HttpPost("reorder")]
+    public async Task<IActionResult> Reorder([FromBody] IdListDto dto)
+    {
+        var projects = await db.Projects.Where(p => dto.Ids.Contains(p.Id)).ToListAsync();
+        var byId = projects.ToDictionary(p => p.Id);
+
+        for (var i = 0; i < dto.Ids.Count; i++)
+            if (byId.TryGetValue(dto.Ids[i], out var project))
+                project.OrderIndex = i;
+
         await db.SaveChangesAsync();
         return NoContent();
     }

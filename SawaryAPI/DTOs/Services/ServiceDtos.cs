@@ -5,17 +5,24 @@ namespace SawaryAPI.DTOs.Services;
 public class ServiceCardDto
 {
     public int Id { get; set; }
-    public string Title { get; set; } = string.Empty;
-    public string ImageUrl { get; set; } = string.Empty;
+    public string TitleAr { get; set; } = string.Empty;
+    public string TitleEn { get; set; } = string.Empty;
+    public string Slug { get; set; } = string.Empty;
+    public string? DescriptionAr { get; set; }
+    public string? DescriptionEn { get; set; }
+    public string HeroImageUrl { get; set; } = string.Empty;
     public int OrderIndex { get; set; }
+    public List<ServiceCardDto> Cards { get; set; } = [];
 }
 
 public class ServiceSectionDto
 {
     public int Id { get; set; }
-    public string Title { get; set; } = string.Empty;
+    public string TitleAr { get; set; } = string.Empty;
+    public string TitleEn { get; set; } = string.Empty;
     public string Slug { get; set; } = string.Empty;
-    public string? Description { get; set; }
+    public string? DescriptionAr { get; set; }
+    public string? DescriptionEn { get; set; }
     public string HeroImageUrl { get; set; } = string.Empty;
     public int OrderIndex { get; set; }
     public List<ServiceCardDto> Cards { get; set; } = [];
@@ -23,15 +30,19 @@ public class ServiceSectionDto
 
 public class CreateServiceSectionDto
 {
-    [Required] public string Title { get; set; } = string.Empty;
-    public string? Description { get; set; }
+    [Required] public string TitleAr { get; set; } = string.Empty;
+    [Required] public string TitleEn { get; set; } = string.Empty;
+    public string? DescriptionAr { get; set; }
+    public string? DescriptionEn { get; set; }
     public int OrderIndex { get; set; }
 }
 
 public class UpdateServiceSectionDto
 {
-    public string? Title { get; set; }
-    public string? Description { get; set; }
+    public string? TitleAr { get; set; }
+    public string? TitleEn { get; set; }
+    public string? DescriptionAr { get; set; }
+    public string? DescriptionEn { get; set; }
     public int? OrderIndex { get; set; }
 }
 
@@ -44,6 +55,9 @@ public class CreateServiceCardForm
 
 public class UpdateServiceCardDto
 {
-    public string? Title { get; set; }
+    public string? TitleAr { get; set; }
+    public string? TitleEn { get; set; }
+    public string? DescriptionAr { get; set; }
+    public string? DescriptionEn { get; set; }
     public int? OrderIndex { get; set; }
 }

@@ -19,17 +19,22 @@ public class ServiceSectionsController(AppDbContext db) : ControllerBase
     private static ServiceCardDto MapCard(ServiceCard c) => new()
     {
         Id = c.Id,
-        Title = c.Title,
-        ImageUrl = c.ImageUrl,
+        TitleAr = c.TitleAr,
+        TitleEn = c.TitleEn,
+        DescriptionAr = c.DescriptionAr,
+        DescriptionEn = c.DescriptionEn,
+        HeroImageUrl = c.ImageUrl,
         OrderIndex = c.OrderIndex,
     };
 
     private static ServiceSectionDto MapSection(ServiceSection s) => new()
     {
         Id = s.Id,
-        Title = s.Title,
+        TitleAr = s.TitleAr,
+        TitleEn = s.TitleEn,
         Slug = s.Slug,
-        Description = s.Description,
+        DescriptionAr = s.DescriptionAr,
+        DescriptionEn = s.DescriptionEn,
         HeroImageUrl = s.HeroImageUrl,
         OrderIndex = s.OrderIndex,
         Cards = s.Cards.OrderBy(c => c.OrderIndex).Select(MapCard).ToList(),
@@ -77,7 +82,7 @@ public class ServiceSectionsController(AppDbContext db) : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateServiceSectionDto dto)
     {
-        var baseSlug = SlugHelper.Slugify(dto.Title);
+        var baseSlug = SlugHelper.Slugify(dto.TitleAr);
         var slug = baseSlug;
         var suffix = 2;
         while (await db.ServiceSections.AnyAsync(s => s.Slug == slug))
@@ -88,9 +93,11 @@ public class ServiceSectionsController(AppDbContext db) : ControllerBase
 
         var section = new ServiceSection
         {
-            Title = dto.Title,
+            TitleAr = dto.TitleAr,
+            TitleEn = dto.TitleEn,
             Slug = slug,
-            Description = dto.Description,
+            DescriptionAr = dto.DescriptionAr,
+            DescriptionEn = dto.DescriptionEn,
             HeroImageUrl = string.Empty,
             OrderIndex = dto.OrderIndex,
         };
@@ -109,8 +116,10 @@ public class ServiceSectionsController(AppDbContext db) : ControllerBase
         var section = await db.ServiceSections.FindAsync(id);
         if (section is null) return NotFound();
 
-        if (dto.Title is not null) section.Title = dto.Title;
-        if (dto.Description is not null) section.Description = dto.Description;
+        if (dto.TitleAr is not null) section.TitleAr = dto.TitleAr;
+        if (dto.TitleEn is not null) section.TitleEn = dto.TitleEn;
+        if (dto.DescriptionAr is not null) section.DescriptionAr = dto.DescriptionAr;
+        if (dto.DescriptionEn is not null) section.DescriptionEn = dto.DescriptionEn;
         if (dto.OrderIndex.HasValue) section.OrderIndex = dto.OrderIndex.Value;
 
         await db.SaveChangesAsync();
@@ -165,16 +174,29 @@ public class ServiceSectionsController(AppDbContext db) : ControllerBase
         return Ok(new { heroImageUrl = url });
     }
 
-    // POST /api/service-sections/{id}/cards — admin only, multipart form: "title" + "image"
+    // POST /api/service-sections/{id}/cards — admin only, multipart form:
+    // "titleAr" + "titleEn" + optional "descriptionAr"/"descriptionEn" + "image".
+    // A bare "title" is still accepted as the Arabic title for older clients.
     [Authorize]
     [HttpPost("{id:int}/cards")]
     [RequestSizeLimit(MaxFileSize)]
-    public async Task<IActionResult> CreateCard(int id, [FromForm] string title, IFormFile image, [FromServices] LocalImageStorageService storage)
+    public async Task<IActionResult> CreateCard(
+        int id,
+        IFormFile image,
+        [FromServices] LocalImageStorageService storage,
+        [FromForm] string? titleAr = null,
+        [FromForm] string? titleEn = null,
+        [FromForm] string? descriptionAr = null,
+        [FromForm] string? descriptionEn = null,
+        [FromForm] string? title = null)
     {
         var section = await db.ServiceSections.FindAsync(id);
         if (section is null) return NotFound();
 
-        if (string.IsNullOrWhiteSpace(title)) return BadRequest(new { message = "العنوان مطلوب" });
+        titleAr = string.IsNullOrWhiteSpace(titleAr) ? title : titleAr;
+        if (string.IsNullOrWhiteSpace(titleAr)) return BadRequest(new { message = "العنوان مطلوب" });
+        if (titleAr.Length > 150 || titleEn?.Length > 150) return BadRequest(new { message = "العنوان طويل جداً (150 حرفاً كحد أقصى)" });
+        if (descriptionAr?.Length > 4000 || descriptionEn?.Length > 4000) return BadRequest(new { message = "الوصف طويل جداً (4000 حرف كحد أقصى)" });
 
         var ext = Path.GetExtension(image.FileName).TrimStart('.').ToLowerInvariant();
         if (!AllowedExtensions.Contains(ext)) return BadRequest(new { message = "Invalid file type" });
@@ -190,7 +212,10 @@ public class ServiceSectionsController(AppDbContext db) : ControllerBase
 
         var card = new ServiceCard
         {
-            Title = title,
+            TitleAr = titleAr.Trim(),
+            TitleEn = titleEn?.Trim() ?? string.Empty,
+            DescriptionAr = descriptionAr?.Trim() ?? string.Empty,
+            DescriptionEn = descriptionEn?.Trim() ?? string.Empty,
             ImageUrl = url,
             PublicId = relativePath,
             OrderIndex = nextOrder + 1,

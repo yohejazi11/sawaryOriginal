@@ -48,31 +48,21 @@ function useCountUp(target: number, duration = 2400) {
 export default function HeroCTA() {
     const { t, lang } = useLanguage();
     const clients = useCountUp(7000, 2600);
-    const years   = useCountUp(12,   1600);
+    const years = useCountUp(12, 1600);
 
     return (
         <section
             className="relative overflow-hidden"
             style={{
-                backgroundImage: "url('/images/pattern/pattern.avif')",
-                backgroundRepeat: 'repeat',
-                backgroundSize: 'auto',
-                backgroundPosition: 'bottom',
-                backgroundColor: 'var(--color-brand-bg)',
+                // backgroundImage: "url('/images/pattern/pattern.avif')",
+                // backgroundRepeat: 'repeat',
+                // backgroundSize: 'auto',
+                // backgroundPosition: 'bottom',
+                backgroundColor: '#F4EFE3',
             }}
         >
-            {/* Dark tint — controls how strongly the pattern shows through */}
-            <div
-                aria-hidden
-                className="pointer-events-none absolute inset-0 bg-brand-bg/55"
-            />
 
-            {/* Grain overlay */}
-            <div
-                aria-hidden
-                className="pointer-events-none absolute inset-0"
-                style={{ backgroundImage: NOISE, backgroundRepeat: 'repeat' }}
-            />
+
 
             {/* Top rule */}
             <div className="absolute inset-x-0 top-0 h-px bg-brand-primary/45" />
@@ -83,7 +73,7 @@ export default function HeroCTA() {
                     {/* ── Col 1: 7 000 clients ──────────────────────────────── */}
                     <motion.div
                         ref={clients.ref}
-                        className="relative flex flex-1 flex-col items-center justify-center gap-3 overflow-hidden  p-8"
+                        className="relative flex flex-1  items-end justify-center gap-3 overflow-hidden  p-8"
                         variants={col}
                         initial="hidden"
                         whileInView="show"
@@ -91,7 +81,7 @@ export default function HeroCTA() {
                     >
                         <motion.span
                             variants={up}
-                            className="text-5xl font-light tracking-[0.28em] text-brand-cream uppercase"
+                            className="text-2xl font-light tracking-[0.28em] text-[#343229] uppercase"
                         >
                             {t('heroCTA.clientsLabel')}
                         </motion.span>
@@ -101,12 +91,10 @@ export default function HeroCTA() {
                             aria-hidden
                             className="block select-none leading-none"
                             style={{
-                                fontSize:           'clamp(5rem, 12vw, 11rem)',
-                                fontWeight:         900,
-                                WebkitTextStroke:   '1.5px rgb(190, 156, 100)',
-                                color:              'transparent',
-                                letterSpacing:      '-0.04em',
-                                fontVariantNumeric: 'tabular-nums',
+                                fontSize: 'clamp(3rem, 8vw, 8rem)',
+                                fontWeight: 900,
+                                color: 'rgb(190, 156, 100)',
+                                letterSpacing: '-0.04em',
                             }}
                         >
                             {clients.count.toLocaleString('en-US')}
@@ -114,7 +102,7 @@ export default function HeroCTA() {
 
                         <motion.span
                             variants={up}
-                            className="text-3xl font-light tracking-[0.28em] text-brand-cream uppercase"
+                            className="text-2xl font-light tracking-[0.28em] text-[#343229] uppercase"
                         >
                             {t('heroCTA.clientsUnit')}
                         </motion.span>
@@ -125,7 +113,7 @@ export default function HeroCTA() {
                     {/* ── Col 2: 12 years ───────────────────────────────────── */}
                     <motion.div
                         ref={years.ref}
-                        className="relative flex flex-1 flex-col items-center justify-center gap-3 overflow-hidden  p-8"
+                        className="relative flex flex-1 items-end justify-center gap-3 overflow-hidden  p-8"
                         variants={col}
                         initial="hidden"
                         whileInView="show"
@@ -133,7 +121,7 @@ export default function HeroCTA() {
                     >
                         <motion.span
                             variants={up}
-                            className="text-5xl font-light tracking-[0.28em] text-brand-cream uppercase"
+                            className="text-2xl font-light tracking-[0.28em] text-[#343229] uppercase"
                         >
                             {t('heroCTA.yearsLabel')}
                         </motion.span>
@@ -143,12 +131,10 @@ export default function HeroCTA() {
                             aria-hidden
                             className="block select-none leading-none"
                             style={{
-                                fontSize:           'clamp(5rem, 12vw, 11rem)',
-                                fontWeight:         900,
-                                WebkitTextStroke:   '1.5px rgb(190, 156, 100)',
-                                color:              'transparent',
-                                letterSpacing:      '-0.04em',
-                                fontVariantNumeric: 'tabular-nums',
+                                fontSize: 'clamp(3rem, 8vw, 8rem)',
+                                fontWeight: 900,
+                                color: 'rgb(190, 156, 100)',
+                                letterSpacing: '-0.04em',
                             }}
                         >
                             {years.count}
@@ -156,7 +142,7 @@ export default function HeroCTA() {
 
                         <motion.span
                             variants={up}
-                            className="text-3xl font-light tracking-[0.28em] text-brand-cream uppercase"
+                            className="text-2xl font-light tracking-[0.28em] text-[#343229] uppercase"
                         >
                             {t('heroCTA.yearsUnit')}
                         </motion.span>

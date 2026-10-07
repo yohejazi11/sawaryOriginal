@@ -111,6 +111,7 @@ export default async function ProjectDetailPage({
     .map((p: ApiProjectList) => ({
       id: p.id,
       name: p.name,
+      isFeatured: !!p.isFeatured,
       coverImageUrl: p.coverImageUrl,
       tags: (p.tags ?? []).map(tag => ({ nameAr: tag.nameAr, nameEn: tag.nameEn })),
       year: p.year,

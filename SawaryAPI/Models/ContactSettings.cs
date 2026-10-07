@@ -8,6 +8,8 @@ public class ContactSettings
     public int Id { get; set; }
     public string WhatsAppNumber { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
+    // YouTube link shown in the home hero's video box. Empty = box shows no video.
+    public string HeroVideoUrl { get; set; } = string.Empty;
     public ICollection<ContactPhoneNumber> PhoneNumbers { get; set; } = [];
     public ICollection<SocialLink> SocialLinks { get; set; } = [];
 }

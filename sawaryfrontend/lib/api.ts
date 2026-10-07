@@ -1,8 +1,33 @@
+import { tagsForApiPath, type CacheTag } from './cacheTags'
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5298'
 
 function getToken(): string | null {
   if (typeof window === 'undefined') return null
   return localStorage.getItem('sawary_token')
+}
+
+// ── Public-page cache purge ───────────────────────────────────────────────────
+// Successful admin writes queue their affected cache tags; they're flushed to
+// /api/revalidate in one request shortly after, so a burst of writes (reordering,
+// bulk import) costs a single purge.
+const pendingTags = new Set<CacheTag>()
+let flushTimer: ReturnType<typeof setTimeout> | null = null
+
+function queueRevalidate(path: string, token: string) {
+  for (const tag of tagsForApiPath(path)) pendingTags.add(tag)
+  if (pendingTags.size === 0 || flushTimer) return
+  flushTimer = setTimeout(() => {
+    const tags = [...pendingTags]
+    pendingTags.clear()
+    flushTimer = null
+    fetch('/api/revalidate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ tags }),
+      keepalive: true,
+    }).catch(() => {})
+  }, 300)
 }
 
 export async function apiFetch(
@@ -24,6 +49,9 @@ export async function apiFetch(
     localStorage.removeItem('sawary_token')
     window.location.href = '/admin/login'
   }
+
+  const method = (options.method ?? 'GET').toUpperCase()
+  if (res.ok && method !== 'GET' && token) queueRevalidate(path, token)
 
   return res
 }

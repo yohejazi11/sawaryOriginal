@@ -3,34 +3,14 @@
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Phone, MessageCircle, Mail } from 'lucide-react'
+import { MdArrowOutward } from 'react-icons/md'
 import Footer from '@/components/sections/Footer'
+import Reveal from '@/components/ui/Reveal'
 import { iconForPlatform } from '@/components/ui/SocialIcons'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useSiteSettings } from '@/contexts/SiteSettingsContext'
 
 const EASE = [0.22, 1, 0.36, 1] as const
-
-const stagger = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.12 } },
-}
-
-const rise = {
-  hidden: { opacity: 0, y: 22 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.7, ease: EASE } },
-}
-
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex items-center gap-5">
-      <span className="h-px flex-1 bg-brand-primary/35" />
-      <span className="shrink-0 text-sm font-light tracking-[0.3em] text-brand-primary uppercase">
-        {children}
-      </span>
-      <span className="h-px flex-1 bg-brand-primary/35" />
-    </div>
-  )
-}
 
 export default function ContactClient() {
   const { t, lang } = useLanguage()
@@ -52,82 +32,83 @@ export default function ContactClient() {
   }))
 
   return (
-    <main className="min-h-screen bg-brand-bg" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+    <main className="flex min-h-screen flex-col bg-[#F4EFE3] text-[#343229]" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+      <section className="flex w-full flex-col px-[32px] pb-[96px] pt-36">
 
-      {/* Page header */}
-      <section className="flex flex-col items-center justify-center px-6 pb-20 pt-36">
+        {/* ── Header ──────────────────────────────────────────────────────── */}
         <motion.h1
-          initial={{ opacity: 0, y: -24 }}
+          className="text-[clamp(2.5rem,6vw,4.5rem)] leading-tight"
+          initial={{ opacity: 0, y: 32 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: EASE }}
-          className="font-display mb-6 text-center text-6xl font-bold text-brand-cream md:text-8xl"
+          transition={{ duration: 0.8, delay: 0.2, ease: EASE }}
         >
           {t('contact.pageTitle')}
         </motion.h1>
-        <motion.div
-          initial={{ scaleX: 0 }}
-          animate={{ scaleX: 1 }}
-          transition={{ duration: 0.9, delay: 0.3, ease: EASE }}
-          className="h-px w-24 bg-brand-primary/40"
-        />
-      </section>
 
-      {/* Contact info */}
-      <section className="mx-auto max-w-4xl px-8 pb-28 md:px-20">
-        <motion.div
-          className="grid grid-cols-1 gap-6 md:grid-cols-3"
-          variants={stagger}
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, amount: 0.2 }}
-        >
-          {CONTACT_INFO.map(({ Icon, label, value, href }) => (
-            <motion.a
-              key={label}
-              variants={rise}
-              href={href}
-              target={href.startsWith('http') ? '_blank' : undefined}
-              rel={href.startsWith('http') ? 'noopener noreferrer' : undefined}
-              className="group relative flex flex-col items-center gap-4 overflow-hidden rounded-sm border border-brand-primary/15 p-10 text-center transition-all duration-300 hover:-translate-y-1 hover:border-brand-primary/50"
-              style={{ background: 'rgb(42,43,39)' }}
-            >
-              <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-brand-primary/40 text-brand-primary transition-colors duration-300 group-hover:border-brand-primary group-hover:bg-brand-primary/10">
-                <Icon size={22} strokeWidth={1.4} />
-              </span>
-              <span className="text-sm font-light tracking-[0.25em] text-brand-primary uppercase">
-                {label}
-              </span>
-              <span className="text-base text-brand-cream/80">{value}</span>
-            </motion.a>
-          ))}
-        </motion.div>
+        {/* ── Contact cards — numbered like the service cards, turn dark on hover ── */}
+        <div className="mt-[64px] grid w-full grid-cols-1 gap-2 md:grid-cols-3">
+          {CONTACT_INFO.map(({ Icon, label, value, href }, i) => {
+            const external = href.startsWith('http')
+            return (
+              <Reveal key={label} variant="curtain" delay={i * 0.15} duration={1.1}>
+                <a
+                  href={href}
+                  target={external ? '_blank' : undefined}
+                  rel={external ? 'noopener noreferrer' : undefined}
+                  className="group relative flex h-[320px] flex-col justify-between rounded-[25px] border border-[#343229] p-8 transition-colors duration-300 hover:bg-[#343229] hover:text-[#F4EFE3]"
+                >
+                  <div className="flex items-start justify-between">
+                    <span className="flex h-14 w-14 items-center justify-center rounded-full border border-current">
+                      <Icon size={22} strokeWidth={1.4} />
+                    </span>
+                    <span
+                      aria-hidden
+                      className="select-none text-[64px] font-semibold leading-none text-transparent [-webkit-text-stroke:1.5px_#343229] group-hover:[-webkit-text-stroke-color:#F4EFE3]"
+                    >
+                      {String(i + 1).padStart(2, '0')}
+                    </span>
+                  </div>
 
-        {/* Social links */}
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.3 }}
-          transition={{ duration: 0.7, ease: EASE }}
-          className="mt-16"
-        >
-          <SectionLabel>{t('contact.social.title')}</SectionLabel>
+                  <div className="flex items-end justify-between gap-4">
+                    <div className="flex min-w-0 flex-col gap-2">
+                      <span className="text-[16px] opacity-60">{label}</span>
+                      <span className="truncate text-[22px] font-medium md:text-[24px]" dir={href.startsWith('mailto') || href.startsWith('tel') ? 'ltr' : undefined}>
+                        {value}
+                      </span>
+                    </div>
+                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#343229] text-[22px] text-[#F4EFE3] transition-all duration-300 group-hover:scale-110 group-hover:bg-[#F4EFE3] group-hover:text-[#343229]">
+                      <MdArrowOutward />
+                    </span>
+                  </div>
+                </a>
+              </Reveal>
+            )
+          })}
+        </div>
 
-          <div className="mt-8 flex flex-wrap justify-center gap-3">
-            {SOCIALS.map(({ Icon, label, href }) => (
-              <Link
-                key={label}
-                href={href}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={label}
-                title={label}
-                className="group flex h-12 w-12 items-center justify-center rounded-full border border-brand-primary/30 text-brand-primary transition-all duration-300 hover:scale-110 hover:border-brand-primary hover:bg-brand-primary/10"
-              >
-                <Icon size={18} />
-              </Link>
-            ))}
+        {/* ── Social links ────────────────────────────────────────────────── */}
+        {SOCIALS.length > 0 && (
+          <div className="mt-[96px] flex w-full items-center justify-between gap-[32px] max-sm:flex-col max-sm:items-start">
+            <Reveal>
+              <h2 className="text-[clamp(2rem,5vw,4rem)] leading-tight">{t('contact.social.title')}</h2>
+            </Reveal>
+            <Reveal delay={0.15} className="flex flex-wrap items-center gap-2">
+              {SOCIALS.map(({ Icon, label, href }) => (
+                <Link
+                  key={label}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={label}
+                  className="flex items-center gap-2 rounded-[15px] border border-[#343229] px-6 py-2 text-[16px] capitalize transition-all duration-300 hover:bg-[#343229] hover:text-[#F4EFE3]"
+                >
+                  <Icon size={18} />
+                  <span>{label}</span>
+                </Link>
+              ))}
+            </Reveal>
           </div>
-        </motion.div>
+        )}
       </section>
 
       <Footer />

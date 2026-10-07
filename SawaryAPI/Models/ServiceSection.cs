@@ -5,9 +5,11 @@ namespace SawaryAPI.Models;
 public class ServiceSection
 {
     public int Id { get; set; }
-    public string Title { get; set; } = string.Empty;
+    public string TitleAr { get; set; } = string.Empty;
+    public string TitleEn { get; set; } = string.Empty;
     public string Slug { get; set; } = string.Empty;
-    public string? Description { get; set; }
+    public string? DescriptionAr { get; set; }
+    public string? DescriptionEn { get; set; }
     public string HeroImageUrl { get; set; } = string.Empty;
     public string? HeroImagePublicId { get; set; }
     public int OrderIndex { get; set; }

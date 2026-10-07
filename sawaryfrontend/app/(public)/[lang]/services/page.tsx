@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import ServicesClient from './ServicesClient'
 import { breadcrumbJsonLd, jsonLdScript } from '@/lib/seo'
 import { localizedHref, type Locale } from '@/lib/i18n'
+import { getServiceSections } from '@/lib/services'
 
 const SITE_URL = 'https://www.sawarydecor.com'
 const PATH = '/services'
@@ -60,6 +61,7 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: Loc
 export default async function ServicesPage({ params }: { params: Promise<{ lang: Locale }> }) {
   const { lang } = await params
   const c = COPY[lang]
+  const sections = await getServiceSections()
   const breadcrumbs = breadcrumbJsonLd(
     c.breadcrumbs.map(({ name, path }) => ({ name, path: localizedHref(lang, path) }))
   )
@@ -69,7 +71,7 @@ export default async function ServicesPage({ params }: { params: Promise<{ lang:
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLdScript(breadcrumbs) }}
       />
-      <ServicesClient />
+      <ServicesClient sections={sections} />
     </>
   )
 }

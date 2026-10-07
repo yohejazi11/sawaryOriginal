@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from 'framer-motion';
 import { Menu, X } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -12,16 +13,34 @@ const NAV = [
   { href: '/works',    key: 'nav.works'    },
   { href: '/about',    key: 'nav.about'    },
   { href: '/services', key: 'nav.services' },
+  { href: '/blog',     key: 'nav.blog'     },
   { href: '/contact',  key: 'nav.contact'  },
 ] as const;
 
 const EASE = [0.22, 1, 0.36, 1] as const;
+
+// On the home page the header drops in last, after the hero intro (see HeroSection's INTRO).
+const HOME_PATHS = ['/', '/ar', '/en'];
+const HOME_INTRO_DELAY = 1.2;
+
+// Pages on the cream background — the white glass band washes out against them, so
+// there the band turns dark instead. Paths are matched after stripping the locale.
+const LIGHT_PATHS = ['/works', '/about', '/services', '/contact', '/blog'];
+// Every page under these prefixes is light too (blog articles, service details) —
+// except the older Design/Execution service pages, which are still dark.
+const LIGHT_PREFIXES = ['/blog/', '/services/'];
+const DARK_PATHS = ['/services/design', '/services/execution'];
 
 export default function Header() {
   const { lang, toggleLang, t } = useLanguage();
   const [scrolled,    setScrolled]    = useState(false);
   const [mobileOpen,  setMobileOpen]  = useState(false);
   const { scrollY } = useScroll();
+  const pathname = usePathname() ?? '';
+  const isHome = HOME_PATHS.includes(pathname);
+  const barePath = pathname.replace(/^\/(ar|en)(?=\/|$)/, '').replace(/\/$/, '');
+  const isLight = !DARK_PATHS.includes(barePath)
+    && (LIGHT_PATHS.includes(barePath) || LIGHT_PREFIXES.some(p => barePath.startsWith(p)));
 
   useMotionValueEvent(scrollY, 'change', (y) => {
     setScrolled(y > 60);
@@ -31,23 +50,37 @@ export default function Header() {
     <motion.header
       initial={{ y: -16, opacity: 0 }}
       animate={{ y: 0,   opacity: 1  }}
-      transition={{ duration: 0.7, ease: EASE }}
-      className="fixed inset-x-0 top-0 z-50"
+      transition={{ duration: 0.7, ease: EASE, delay: isHome ? HOME_INTRO_DELAY : 0 }}
+      className="fixed inset-x-0 top-0 mx-[32px] mt-[12px] z-50"
     >
       {/* Glass band — always present so nav stays readable over any hero image,
           strengthens further on scroll. Never fully transparent — the fixed header
           sits over photographic content on several pages (Works gallery, project
           heroes), so it can't rely on the image underneath being dark. */}
-      <div
-        className="absolute inset-0 transition-all duration-500"
-        style={{
-          background: scrolled ? 'rgba(52, 50, 41, 0.92)' : 'rgba(52, 50, 41, 0.72)',
-          backdropFilter: 'blur(16px) saturate(1.4)',
-          WebkitBackdropFilter: 'blur(16px) saturate(1.4)',
-          borderBottom: scrolled ? '1px solid rgba(255,255,255,0.06)' : '1px solid transparent',
-          boxShadow: scrolled ? '0 2px 32px rgba(0,0,0,0.28)' : 'none',
-        }}
-      />
+<div
+  className="absolute inset-0 transition-all duration-500 rounded-[25px]"
+  style={isLight ? {
+    background: scrolled
+      ? 'rgba(52, 50, 41, 0.92)'
+      : 'rgba(52, 50, 41, 0.85)',
+    backdropFilter: 'blur(20px) saturate(1.8)',
+    WebkitBackdropFilter: 'blur(20px) saturate(1.8)',
+    border: '1px solid rgba(244,239,227,0.12)',
+    boxShadow: scrolled
+      ? '0 8px 32px rgba(0,0,0,0.18), inset 0 1px 0 rgba(244,239,227,0.12)'
+      : 'inset 0 1px 0 rgba(244,239,227,0.12)',
+  } : {
+    background: scrolled
+      ? 'rgba(255, 255, 255, 0.25)'
+      : 'rgba(255, 255, 255, 0.15)',
+    backdropFilter: 'blur(20px) saturate(1.8)',
+    WebkitBackdropFilter: 'blur(20px) saturate(1.8)',
+    border: '1px solid rgba(255,255,255,0.2)',
+    boxShadow: scrolled
+      ? '0 8px 32px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.9)'
+      : 'inset 0 1px 0 rgba(255,255,255,0.7)',
+  }}
+/>
 
       {/* ── Main bar ──────────────────────────────────────────────────────── */}
       {/* textShadow cascades to every label/link below — a second line of defense
@@ -61,7 +94,7 @@ export default function Header() {
         {/* ── Logo ─────────────────────────────────────────────────────── */}
         <Link href={localizedHref(lang, '/')} className="group flex items-center gap-3">
           {/* Brand name */}
-          <span className="font-display text-2xl font-bold leading-none text-brand-cream transition-colors duration-300 group-hover:text-brand-primary">
+          <span className="font-display text-2xl font-bold leading-none text-brand-primary transition-colors duration-300 group-hover:text-brand-cream">
             {t('header.brand')}
           </span>
 
@@ -80,7 +113,7 @@ export default function Header() {
             <Link
               key={href}
               href={localizedHref(lang, href)}
-              className="group relative text-base font-medium tracking-wide text-brand-cream/80 transition-colors duration-200 hover:text-brand-cream"
+              className="group relative text-base font-semibold tracking-wide text-brand-cream/80 transition-colors duration-200 hover:text-brand-cream"
             >
               {t(key)}
               {/* Underline draws right→left on hover (RTL direction) */}

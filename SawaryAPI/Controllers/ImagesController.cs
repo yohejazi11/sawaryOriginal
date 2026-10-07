@@ -132,6 +132,47 @@ public class ImagesController(AppDbContext db, LocalImageStorageService storage)
         return NoContent();
     }
 
+    // POST /api/images/bulk-delete — body { ids: [...] }. Deletes every listed image (files
+    // and rows) in one go; if a project's cover was among them, the cover moves to that
+    // project's first remaining image, same as the single-image delete above.
+    [HttpPost("api/images/bulk-delete")]
+    public async Task<IActionResult> BulkDelete([FromBody] IdListDto dto)
+    {
+        var images = await db.ProjectImages
+            .Include(i => i.Project)
+            .Where(i => dto.Ids.Contains(i.Id))
+            .ToListAsync();
+
+        if (images.Count == 0) return NotFound();
+
+        var deletedIds = images.Select(i => i.Id).ToHashSet();
+
+        foreach (var project in images.Select(i => i.Project).DistinctBy(p => p.Id))
+        {
+            if (!images.Any(i => i.ProjectId == project.Id && i.Url == project.CoverImageUrl)) continue;
+
+            var next = await db.ProjectImages
+                .Where(i => i.ProjectId == project.Id && !deletedIds.Contains(i.Id))
+                .OrderBy(i => i.OrderIndex)
+                .FirstOrDefaultAsync();
+            project.CoverImageUrl = next?.Url ?? string.Empty;
+            project.CoverImageWidth = next?.Width;
+            project.CoverImageHeight = next?.Height;
+        }
+
+        db.ProjectImages.RemoveRange(images);
+        await db.SaveChangesAsync();
+
+        // Files go only after the rows are gone, so a failed save never leaves rows pointing at missing files.
+        foreach (var image in images.Where(i => !string.IsNullOrEmpty(i.PublicId)))
+        {
+            try { storage.DeleteImage(image.PublicId!); }
+            catch { /* file deletion failure must not fail the request */ }
+        }
+
+        return Ok(new { deleted = deletedIds.Count });
+    }
+
     // PATCH /api/images/{id}/order
     [HttpPatch("api/images/{id:int}/order")]
     public async Task<IActionResult> UpdateOrder(int id, [FromBody] UpdateOrderDto dto)

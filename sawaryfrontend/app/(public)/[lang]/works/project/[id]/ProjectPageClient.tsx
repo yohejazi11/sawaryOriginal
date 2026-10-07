@@ -10,24 +10,32 @@ import {
   AnimatePresence,
 } from 'framer-motion'
 import Image from 'next/image'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowRight, ChevronDown, ChevronLeft, ChevronRight, X } from 'lucide-react'
+import { ArrowRight, ChevronLeft, ChevronRight, X } from 'lucide-react'
 
 import { type Project } from '@/lib/projects'
 import { getProjectDescription, getCoverImageAlt, getGalleryImageAlt } from '@/lib/projectContent'
-import DesignCard from '@/components/ui/DesignCard'
+import { localizedHref } from '@/lib/i18n'
+import FeaturedBadge from '@/components/ui/FeaturedBadge'
 import JustifiedGallery from '@/components/ui/JustifiedGallery'
+import PortfolioCard from '@/components/ui/PortfolioCard'
+import Reveal from '@/components/ui/Reveal'
 import Footer from '@/components/sections/Footer'
 import { useLanguage } from '@/contexts/LanguageContext'
 
 const EASE_ENTER = [0.16, 1, 0.3, 1] as const
 const EASE = [0.22, 1, 0.36, 1] as const
-const BRAND_PRIMARY = 'rgb(190, 156, 100)'
-const WARM_WHITE = 'rgb(244, 239, 227)'
+
+// Home-page design language (gallery / services sections) on the dark background:
+// cream text and thin cream borders instead of dark ones.
+const DARK = '#343229'
+const CREAM = '#F4EFE3'
 
 export interface RelatedProject {
   id: number
   name: string
+  isFeatured: boolean
   coverImageUrl: string
   tags: { nameAr: string; nameEn: string }[]
   year: string
@@ -80,154 +88,115 @@ export default function ProjectPageClient({
   }, [total])
 
   const description = getProjectDescription(project, lang)
-  const tagNames = project.tags.map(t => (lang === 'ar' ? t.nameAr : t.nameEn)).join(lang === 'ar' ? '، ' : ', ')
+  const tagNames = project.tags.map(tg => (lang === 'ar' ? tg.nameAr : tg.nameEn))
+  const meta = [...tagNames, project.year, project.location].filter(Boolean)
 
   return (
-    <main className="min-h-screen bg-brand-bg" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+    <main className="flex min-h-screen flex-col" style={{ background: DARK, color: CREAM }} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
 
-      {/* Fixed back button */}
-      {/* top-24 = 6rem = 96px clears the fixed header (h-20 = 80px) */}
-      <button
-        onClick={handleBack}
-        className="fixed right-6 top-24 z-50 flex items-center gap-2 text-sm text-brand-cream/70 transition-colors hover:text-brand-primary"
-        style={{ textShadow: '0 1px 8px rgba(0,0,0,0.55)' }}
-      >
-        <span>{t('projectDetail.back')}</span>
-        <ArrowRight size={14} />
-      </button>
-
-      {/* ── Section 1: Cinematic Hero (100vh) ────────────────────────────── */}
-      <section className="relative h-screen overflow-hidden">
-
-        {/* Cover image — entry/exit animation */}
-        <motion.div
-          className="absolute inset-0"
-          initial={{ scale: 0.85, opacity: 0 }}
-          animate={isExiting ? { scale: 0.85, opacity: 0 } : { scale: 1, opacity: 1 }}
-          transition={{ duration: isExiting ? 0.65 : 0.8, ease: EASE_ENTER }}
-        >
-          <Image
-            src={project.coverImage || `https://picsum.photos/seed/${project.slug}-cover/1920/1080`}
-            alt={getCoverImageAlt(project)}
-            fill
-            className="object-cover"
-            sizes="100vw"
-            priority
-          />
-        </motion.div>
-
-        {/* Cinematic overlay — graduated rather than flat: darkest where the back
-            button/metadata sit (top) and where the title sits (bottom), lighter
-            through the middle so the photo itself still reads through. */}
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background:
-              'linear-gradient(to bottom, rgba(18,17,14,0.62) 0%, rgba(18,17,14,0.22) 32%, rgba(18,17,14,0.28) 58%, rgba(18,17,14,0.75) 100%)',
-          }}
-        />
-
-        {/* Top-right: thin vertical line + metadata stack */}
-        {/* top-36 clears both the fixed header (h-20 = 80px) and the fixed back button at top-24 */}
-        <motion.div
-          className="absolute right-8 top-36 flex items-start gap-3"
-          dir="ltr"
-          initial={{ opacity: 0, y: -12 }}
-          animate={isExiting ? { opacity: 0 } : { opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: isExiting ? 0 : 0.9, ease: EASE }}
-        >
-          <div className="mt-1 w-px bg-brand-primary" style={{ height: 64 }} />
-          <div className="flex flex-col gap-1.5" dir={lang === 'ar' ? 'rtl' : 'ltr'} style={{ textShadow: '0 1px 8px rgba(0,0,0,0.55)' }}>
-            {tagNames && <span className="text-sm tracking-[0.25em] text-brand-primary">{tagNames}</span>}
-            <span className="text-sm tracking-[0.25em] text-brand-primary">{project.year}</span>
-            <span className="text-sm tracking-[0.25em] text-brand-primary">{project.location}</span>
-          </div>
-        </motion.div>
-
-        {/* Bottom: massive project name */}
-        <motion.h1
-          className="font-display absolute inset-x-0 select-none font-bold"
-          style={{
-            bottom: 'clamp(5rem, 12vh, 9rem)',
-            fontSize: 'clamp(3rem, 10vw, 8rem)',
-            lineHeight: 1,
-            color: WARM_WHITE,
-            paddingLeft: 'clamp(1.5rem, 5vw, 4rem)',
-            paddingRight: 'clamp(1.5rem, 5vw, 4rem)',
-            textShadow: '0 4px 32px rgba(0,0,0,0.5)',
-          }}
-          initial={{ opacity: 0, y: 50 }}
-          animate={isExiting ? { opacity: 0, y: 50 } : { opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: isExiting ? 0 : 0.7, ease: EASE }}
-        >
-          {project.name}
-        </motion.h1>
-
-        {/* Bottom-right: circular scroll indicator */}
-        <motion.div
-          className="absolute bottom-10 right-8 flex flex-col items-center gap-2"
+      {/* ── Section 1: Header + framed cover ─────────────────────────────── */}
+      <section className="flex w-full flex-col gap-[48px] px-[32px] pb-[64px] pt-36">
+        <motion.button
+          onClick={handleBack}
+          className="flex w-fit items-center gap-2 rounded-[15px] border border-[#F4EFE3]/60 px-6 py-2 text-[16px] transition-all duration-300 hover:bg-[#F4EFE3] hover:text-[#343229]"
           initial={{ opacity: 0 }}
           animate={isExiting ? { opacity: 0 } : { opacity: 1 }}
-          transition={{ duration: 0.6, delay: isExiting ? 0 : 1.3 }}
+          transition={{ duration: 0.5, ease: EASE }}
         >
-          <div
-            className="flex items-center justify-center rounded-full border border-brand-primary/60"
-            style={{ width: 48, height: 48 }}
+          <ArrowRight size={18} className={lang === 'ar' ? '' : 'rotate-180'} />
+          <span>{t('projectDetail.back')}</span>
+        </motion.button>
+
+        <div className="flex w-full items-end justify-between gap-[32px] max-sm:flex-col max-sm:items-start">
+          <motion.h1
+            className="text-[clamp(2.5rem,6vw,4.5rem)] leading-tight"
+            initial={{ opacity: 0, y: 32 }}
+            animate={isExiting ? { opacity: 0, y: 32 } : { opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: isExiting ? 0 : 0.2, ease: EASE }}
           >
+            {project.name}
+          </motion.h1>
+
+          {(meta.length > 0 || project.isFeatured) && (
             <motion.div
-              animate={{ y: [0, 5, 0] }}
-              transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+              className="flex flex-wrap items-center gap-2"
+              initial={{ opacity: 0, y: 20 }}
+              animate={isExiting ? { opacity: 0 } : { opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: isExiting ? 0 : 0.35, ease: EASE }}
             >
-              <ChevronDown size={16} className="text-brand-primary" />
+              {project.isFeatured && <FeaturedBadge inline />}
+              {meta.map(item => (
+                <span key={item} className="rounded-[15px] border border-[#F4EFE3]/40 px-5 py-1.5 text-[16px] text-[#F4EFE3]/85">
+                  {item}
+                </span>
+              ))}
             </motion.div>
-          </div>
-          <span className="text-sm tracking-[0.3em] text-brand-primary">{t('about.hero.scrollHint')}</span>
+          )}
+        </div>
+
+        {/* Cover — uncovers bottom→top like the home gallery cards */}
+        <motion.div
+          className="relative h-[75vh] min-h-[360px] w-full overflow-hidden rounded-[25px] border border-[#F4EFE3]/40"
+          initial={{ clipPath: 'inset(100% 0% 0% 0% round 25px)' }}
+          animate={
+            isExiting
+              ? { clipPath: 'inset(0% 0% 100% 0% round 25px)' }
+              : { clipPath: 'inset(0% 0% 0% 0% round 25px)' }
+          }
+          transition={{ duration: isExiting ? 0.65 : 1.1, delay: isExiting ? 0 : 0.3, ease: EASE_ENTER }}
+        >
+          <motion.div
+            className="absolute inset-0"
+            initial={{ scale: 1.2 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 1.6, delay: 0.3, ease: EASE }}
+          >
+            <Image
+              src={project.coverImage || `https://picsum.photos/seed/${project.slug}-cover/1920/1080`}
+              alt={getCoverImageAlt(project)}
+              fill
+              className="object-cover"
+              sizes="100vw"
+              priority
+            />
+          </motion.div>
         </motion.div>
       </section>
 
       {/* ── Section 2: Project Statement ──────────────────────────────────── */}
-      <section className="bg-brand-bg px-8 py-24 md:px-20">
-        <motion.div
-          className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-12 md:grid-cols-2"
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.2 }}
-          transition={{ duration: 0.8, ease: EASE }}
-        >
-          <div>
-            <div className="mb-6 h-px w-24 bg-brand-primary" />
-            <p className="font-body text-lg leading-loose" style={{ color: WARM_WHITE, direction: lang === 'ar' ? 'rtl' : 'ltr' }}>
-              {description}
-            </p>
+      {description && (
+        <section className="px-[32px] py-[64px]">
+          <div className="grid w-full grid-cols-1 items-center gap-12 md:grid-cols-[1fr_auto]">
+            <Reveal>
+              <p className="text-[20px] leading-loose text-[#F4EFE3]/90 md:text-[24px]">{description}</p>
+            </Reveal>
+            <Reveal variant="pop" delay={0.2} className="flex justify-center md:px-[64px]">
+              <span
+                aria-hidden
+                className="select-none text-[clamp(5rem,12vw,10rem)] font-semibold leading-none"
+                style={{ color: 'transparent', WebkitTextStroke: `1.5px ${CREAM}` }}
+              >
+                {String(index + 1).padStart(2, '0')}
+              </span>
+            </Reveal>
           </div>
+        </section>
+      )}
 
-          <div className="flex items-center justify-center">
-            <span
-              aria-hidden
-              className="select-none"
-              style={{
-                fontSize: '10rem',
-                fontWeight: 900,
-                WebkitTextStroke: `2px ${BRAND_PRIMARY}`,
-                color: 'transparent',
-                lineHeight: 1,
-                letterSpacing: '-0.04em',
-              }}
-            >
-              {String(index + 1).padStart(2, '0')}
-            </span>
-          </div>
-        </motion.div>
-      </section>
-      {/* ── Section 4: Details Bar ────────────────────────────────────────── */}
+      {/* ── Section 3: Details Bar ────────────────────────────────────────── */}
       <DetailsBar project={project} imageCount={total} />
-      {/* ── Section 3: Project Gallery (Justified Rows — no cropping) ──────── */}
+
+      {/* ── Section 4: Project Gallery (Justified Rows — no cropping) ──────── */}
       {groupsWithOffset.map(group => group.images.length > 0 && (
-        <section key={group.id ?? 'ungrouped'} className="px-3 py-10 md:px-6">
+        <section key={group.id ?? 'ungrouped'} className="px-[32px] py-[48px]">
           {group.name && (
-            <h2 className="mb-6 px-3 text-2xl font-bold text-brand-cream md:px-0">{group.name}</h2>
+            <Reveal className="mb-[32px]">
+              <h2 className="text-[clamp(1.75rem,4vw,3rem)] leading-tight">{group.name}</h2>
+            </Reveal>
           )}
           <JustifiedGallery
+            gap={8}
+            rounded
             images={group.images.map((img, i) => ({
               src: img.src,
               width: img.width,
@@ -239,35 +208,33 @@ export default function ProjectPageClient({
         </section>
       ))}
 
-
-
       {/* ── Section 5: Related Projects ───────────────────────────────────── */}
       {related.length > 0 && (
-        <section className="bg-brand-bg px-8 py-24 md:px-20">
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.7, ease: EASE }}
-            className="mb-14 flex items-center gap-5"
-          >
-            <span className="h-px flex-1 bg-brand-primary/35" />
-            <span className="shrink-0 text-sm font-light tracking-[0.3em] text-brand-primary uppercase">
-              {t('projectDetail.relatedProjects')}
-            </span>
-            <span className="h-px flex-1 bg-brand-primary/35" />
-          </motion.div>
+        <section className="px-[32px] py-[96px]">
+          <div className="flex w-full items-center justify-between gap-[32px] max-sm:flex-col max-sm:items-start">
+            <Reveal>
+              <h2 className="text-[clamp(2rem,5vw,4rem)] leading-tight">{t('projectDetail.relatedProjects')}</h2>
+            </Reveal>
+            <Reveal delay={0.15}>
+              <Link
+                href={localizedHref(lang, '/works')}
+                className="block w-fit rounded-[15px] bg-[#F4EFE3] px-[46px] py-2 text-[#343229] transition-opacity duration-300 hover:opacity-85"
+              >
+                {t('nav.works')}
+              </Link>
+            </Reveal>
+          </div>
 
-          <div className="flex flex-wrap justify-center gap-5">
+          <div className="mt-[64px] grid w-full grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {related.map((p, i) => (
-              <DesignCard
-                key={String(p.id)}
-                name={p.name}
+              <PortfolioCard
+                key={p.id}
+                href={localizedHref(lang, `/works/project/${p.id}`)}
                 image={p.coverImageUrl}
-                category={p.tags[0] ? (lang === 'ar' ? p.tags[0].nameAr : p.tags[0].nameEn) : undefined}
-                year={p.year}
-                delay={i * 0.1}
-                href={`/works/project/${p.id}`}
+                name={p.name}
+                delay={(i % 3) * 0.15}
+                tone="dark"
+                featured={p.isFeatured}
               />
             ))}
           </div>
@@ -317,9 +284,12 @@ function Lightbox({
     return () => window.removeEventListener('keydown', handleKey)
   }, [onClose, onPrev, onNext])
 
+  const navButton =
+    'absolute top-1/2 z-10 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-[#F4EFE3]/40 text-[#F4EFE3] transition-colors hover:bg-[#F4EFE3] hover:text-[#343229]'
+
   return (
     <motion.div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-[#1e1d18]/95 backdrop-blur-sm"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -328,7 +298,7 @@ function Lightbox({
     >
       <button
         onClick={e => { e.stopPropagation(); onClose() }}
-        className="absolute right-6 top-6 z-10 flex h-11 w-11 items-center justify-center rounded-full border border-brand-primary/30 text-brand-cream transition-colors hover:border-brand-primary hover:text-brand-primary"
+        className="absolute right-6 top-6 z-10 flex h-11 w-11 items-center justify-center rounded-full border border-[#F4EFE3]/40 text-[#F4EFE3] transition-colors hover:bg-[#F4EFE3] hover:text-[#343229]"
         aria-label="إغلاق"
       >
         <X size={20} />
@@ -338,14 +308,14 @@ function Lightbox({
         <>
           <button
             onClick={e => { e.stopPropagation(); onPrev() }}
-            className="absolute left-4 top-1/2 z-10 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-brand-primary/30 text-brand-cream transition-colors hover:border-brand-primary hover:text-brand-primary md:left-8"
+            className={`${navButton} left-4 md:left-8`}
             aria-label="الصورة السابقة"
           >
             <ChevronLeft size={24} />
           </button>
           <button
             onClick={e => { e.stopPropagation(); onNext() }}
-            className="absolute right-4 top-1/2 z-10 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-brand-primary/30 text-brand-cream transition-colors hover:border-brand-primary hover:text-brand-primary md:right-8"
+            className={`${navButton} right-4 md:right-8`}
             aria-label="الصورة التالية"
           >
             <ChevronRight size={24} />
@@ -366,7 +336,7 @@ function Lightbox({
       </motion.div>
 
       {images.length > 1 && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 font-mono text-sm text-brand-primary" dir="ltr">
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 font-mono text-sm text-[#F4EFE3]/70" dir="ltr">
           {String(index + 1).padStart(2, '0')} / {String(images.length).padStart(2, '0')}
         </div>
       )}
@@ -374,7 +344,7 @@ function Lightbox({
   )
 }
 
-// ── Details bar (Section 4) ───────────────────────────────────────────────────
+// ── Details bar ───────────────────────────────────────────────────────────────
 
 function DetailsBar({ project, imageCount }: { project: Project; imageCount: number }) {
   const { t, lang } = useLanguage()
@@ -387,25 +357,21 @@ function DetailsBar({ project, imageCount }: { project: Project; imageCount: num
   ]
 
   return (
-    <section style={{ background: 'rgb(35, 36, 32)' }}>
-      <div className="flex flex-wrap justify-center" dir="ltr">
+    <section className="px-[32px] py-[32px]">
+      <Reveal className="flex w-full flex-wrap overflow-hidden rounded-[25px] border border-[#F4EFE3]/40">
         {stats.map(({ label, value }, i) => (
-          <motion.div
+          <div
             key={label}
-            className="flex flex-col items-center gap-2 px-10 py-12"
-            style={i > 0 ? { borderLeft: '1px solid rgba(190, 156, 100, 0.2)' } : undefined}
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: i * 0.1, ease: EASE }}
+            // Two per row on mobile, one row on desktop — works for 3 or 4 stats.
+            className={`flex flex-1 basis-1/2 flex-col items-center gap-2 px-6 py-10 text-center md:basis-0 ${
+              i > 0 ? 'border-[#F4EFE3]/20 md:border-s' : ''
+            } ${i % 2 === 1 ? 'border-s border-[#F4EFE3]/20' : ''} ${i >= 2 ? 'max-md:border-t max-md:border-[#F4EFE3]/20' : ''}`}
           >
-            <span className="text-sm font-light uppercase tracking-[0.25em]" style={{ color: BRAND_PRIMARY }}>
-              {label}
-            </span>
+            <span className="text-[16px] text-[#F4EFE3]/60">{label}</span>
             <StatCountUp value={value} />
-          </motion.div>
+          </div>
         ))}
-      </div>
+      </Reveal>
     </section>
   )
 }
@@ -428,11 +394,11 @@ function StatCountUp({ value }: { value: string }) {
   }, [isInView, isNumeric, num, motionVal])
 
   if (!isNumeric) {
-    return <span ref={ref} className="text-2xl font-bold" style={{ color: WARM_WHITE }}>{value}</span>
+    return <span ref={ref} className="text-[24px] font-bold" style={{ color: CREAM }}>{value}</span>
   }
 
   return (
-    <motion.span ref={ref} className="text-2xl font-bold tabular-nums" style={{ color: WARM_WHITE }}>
+    <motion.span ref={ref} className="text-[24px] font-bold tabular-nums" style={{ color: CREAM }}>
       {rounded}
     </motion.span>
   )

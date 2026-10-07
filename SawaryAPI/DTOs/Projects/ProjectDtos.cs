@@ -83,3 +83,9 @@ public class UpdateOrderDto
 {
     [Required] public int OrderIndex { get; set; }
 }
+
+// Body for batch endpoints that act on a list of ids (reorder, bulk delete).
+public class IdListDto
+{
+    [Required, MinLength(1)] public List<int> Ids { get; set; } = [];
+}

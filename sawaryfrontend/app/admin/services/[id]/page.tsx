@@ -4,7 +4,64 @@ import { use, useEffect, useState, useCallback, FormEvent } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { apiGet, apiPut, apiDelete, apiUpload } from '@/lib/api'
-import { type ApiServiceSection } from '@/lib/services'
+import { type ApiServiceCard, type ApiServiceSection } from '@/lib/services'
+
+const inputClass =
+  'w-full rounded-sm border border-brand-primary/25 bg-brand-bg px-3 py-2 text-sm text-[rgb(240,238,232)] outline-none focus:border-brand-primary'
+const labelClass = 'mb-1.5 block text-xs text-[rgb(240,238,232)]/60'
+
+// One existing sub-service card: thumbnail + editable Arabic/English title and description.
+function CardEditor({ card, onDelete }: { card: ApiServiceCard; onDelete: () => void }) {
+  const [titleAr, setTitleAr] = useState(card.titleAr ?? '')
+  const [titleEn, setTitleEn] = useState(card.titleEn ?? '')
+  const [descriptionAr, setDescriptionAr] = useState(card.descriptionAr ?? '')
+  const [descriptionEn, setDescriptionEn] = useState(card.descriptionEn ?? '')
+  const [saving, setSaving] = useState(false)
+  const [status, setStatus] = useState<'idle' | 'saved' | 'error'>('idle')
+
+  async function save(e: FormEvent) {
+    e.preventDefault()
+    setSaving(true)
+    setStatus('idle')
+    try {
+      await apiPut(`/api/service-cards/${card.id}`, { titleAr, titleEn, descriptionAr, descriptionEn })
+      setStatus('saved')
+      setTimeout(() => setStatus('idle'), 1500)
+    } catch {
+      setStatus('error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <form onSubmit={save} className="flex gap-4 rounded-sm border border-brand-primary/20 p-3">
+      <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-sm border border-brand-primary/20 bg-brand-bg">
+        {card.heroImageUrl && <Image src={card.heroImageUrl} alt="" fill className="object-cover" sizes="96px" />}
+      </div>
+      <div className="grid flex-1 grid-cols-1 gap-2 sm:grid-cols-2">
+        <input dir="rtl" value={titleAr} onChange={e => setTitleAr(e.target.value)} required maxLength={150} placeholder="العنوان بالعربي" className={inputClass} />
+        <input dir="ltr" value={titleEn} onChange={e => setTitleEn(e.target.value)} maxLength={150} placeholder="Title in English" className={inputClass} />
+        <textarea dir="rtl" value={descriptionAr} onChange={e => setDescriptionAr(e.target.value)} rows={2} maxLength={4000} placeholder="الوصف بالعربي" className={inputClass} />
+        <textarea dir="ltr" value={descriptionEn} onChange={e => setDescriptionEn(e.target.value)} rows={2} maxLength={4000} placeholder="Description in English" className={inputClass} />
+        <div className="flex items-center gap-4 sm:col-span-2">
+          <button
+            type="submit"
+            disabled={saving}
+            className="rounded-sm bg-brand-primary px-4 py-1.5 text-xs font-medium text-white hover:opacity-90 disabled:opacity-60"
+          >
+            {saving ? '...' : 'حفظ'}
+          </button>
+          <button type="button" onClick={onDelete} className="text-xs hover:underline" style={{ color: '#e07070' }}>
+            حذف
+          </button>
+          {status === 'saved' && <span className="text-xs text-brand-primary">تم الحفظ ✓</span>}
+          {status === 'error' && <span className="text-xs" style={{ color: '#e07070' }}>تعذّر الحفظ</span>}
+        </div>
+      </div>
+    </form>
+  )
+}
 
 export default function EditServiceSectionPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -23,7 +80,10 @@ export default function EditServiceSectionPage({ params }: { params: Promise<{ i
   const [heroUploading, setHeroUploading] = useState(false)
   const [heroError, setHeroError] = useState('')
 
-  const [cardTitle, setCardTitle] = useState('')
+  const [cardTitleAr, setCardTitleAr] = useState('')
+  const [cardTitleEn, setCardTitleEn] = useState('')
+  const [cardDescriptionAr, setCardDescriptionAr] = useState('')
+  const [cardDescriptionEn, setCardDescriptionEn] = useState('')
   const [cardFile, setCardFile] = useState<File | null>(null)
   const [cardPreview, setCardPreview] = useState('')
   const [cardUploading, setCardUploading] = useState(false)
@@ -95,10 +155,13 @@ export default function EditServiceSectionPage({ params }: { params: Promise<{ i
     setCardError('')
     try {
       const form = new FormData()
-      form.append('title', cardTitle)
+      form.append('titleAr', cardTitleAr)
+      form.append('titleEn', cardTitleEn)
+      form.append('descriptionAr', cardDescriptionAr)
+      form.append('descriptionEn', cardDescriptionEn)
       form.append('image', cardFile)
       await apiUpload(`/api/service-sections/${id}/cards`, form)
-      setCardTitle('')
+      setCardTitleAr(''); setCardTitleEn(''); setCardDescriptionAr(''); setCardDescriptionEn('')
       handleCardFileChange(null)
       await load()
     } catch (err) {
@@ -215,7 +278,7 @@ export default function EditServiceSectionPage({ params }: { params: Promise<{ i
 
       {/* Cards */}
       <div
-        className="max-w-xl rounded-sm border border-brand-primary/20 p-6"
+        className="max-w-3xl rounded-sm border border-brand-primary/20 p-6"
         style={{ background: 'rgb(42,43,39)' }}
       >
         <h2 className="mb-5 text-sm font-medium text-brand-primary">البطاقات</h2>
@@ -225,35 +288,32 @@ export default function EditServiceSectionPage({ params }: { params: Promise<{ i
             لا توجد بطاقات بعد — سيظهر هذا القسم بحالة &quot;قريباً&quot; في الموقع.
           </p>
         ) : (
-          <div className="mb-6 flex flex-wrap gap-3">
+          <div className="mb-6 flex flex-col gap-3">
             {section.cards.map(card => (
-              <div key={card.id} className="group relative h-28 w-28 overflow-hidden rounded-sm border border-brand-primary/20">
-                <Image src={card.imageUrl} alt="" fill className="object-cover" sizes="112px" />
-                <div className="absolute inset-x-0 bottom-0 bg-black/60 px-1.5 py-1 text-center text-[10px] text-white">
-                  {card.title}
-                </div>
-                <button
-                  onClick={() => deleteCard(card.id)}
-                  className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 transition-opacity group-hover:opacity-100"
-                  style={{ color: '#fca5a5' }}
-                >
-                  حذف
-                </button>
-              </div>
+              <CardEditor key={card.id} card={card} onDelete={() => deleteCard(card.id)} />
             ))}
           </div>
         )}
 
         <form onSubmit={addCard} className="border-t border-brand-primary/15 pt-5">
           <h3 className="mb-3 text-xs font-medium text-[rgb(240,238,232)]/60">إضافة بطاقة جديدة</h3>
-          <div className="mb-3">
-            <label className="mb-1.5 block text-xs text-[rgb(240,238,232)]/60">العنوان</label>
-            <input
-              value={cardTitle}
-              onChange={e => setCardTitle(e.target.value)}
-              required
-              className="w-full rounded-sm border border-brand-primary/25 bg-brand-bg px-3 py-2 text-sm text-[rgb(240,238,232)] outline-none focus:border-brand-primary"
-            />
+          <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div>
+              <label className={labelClass}>العنوان (العربية) *</label>
+              <input dir="rtl" value={cardTitleAr} onChange={e => setCardTitleAr(e.target.value)} required maxLength={150} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>العنوان (الإنجليزية)</label>
+              <input dir="ltr" value={cardTitleEn} onChange={e => setCardTitleEn(e.target.value)} maxLength={150} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>الوصف (العربية)</label>
+              <textarea dir="rtl" value={cardDescriptionAr} onChange={e => setCardDescriptionAr(e.target.value)} rows={3} maxLength={4000} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>الوصف (الإنجليزية)</label>
+              <textarea dir="ltr" value={cardDescriptionEn} onChange={e => setCardDescriptionEn(e.target.value)} rows={3} maxLength={4000} className={inputClass} />
+            </div>
           </div>
           <div className="mb-3">
             <label className="mb-1.5 block text-xs text-[rgb(240,238,232)]/60">الصورة</label>

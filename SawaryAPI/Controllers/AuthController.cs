@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SawaryAPI.Data;
@@ -28,4 +29,10 @@ public class AuthController(AppDbContext db, JwtService jwt) : ControllerBase
             ExpiresAt = expiresAt,
         });
     }
+
+    // Lets the Next.js frontend confirm a bearer token is a valid admin session (used by its
+    // /api/revalidate route before it purges cached pages) without sharing the JWT signing key.
+    [Authorize]
+    [HttpGet("verify")]
+    public IActionResult Verify() => NoContent();
 }

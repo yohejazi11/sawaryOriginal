@@ -8,7 +8,7 @@ export const contentType = 'image/png'
 
 export default async function Image() {
   const [bgImage, fontData] = await Promise.all([
-    readFile(join(process.cwd(), 'public/images/hero/finalFrame.jpg')),
+    readFile(join(process.cwd(), 'public/images/hero/heroImage-og.jpg')),
     readFile(join(process.cwd(), 'public/fonts/29LTZawi-Bold.otf')),
   ])
   const bgSrc = `data:image/jpeg;base64,${bgImage.toString('base64')}`

@@ -5,7 +5,10 @@ namespace SawaryAPI.Models;
 public class ServiceCard
 {
     public int Id { get; set; }
-    public string Title { get; set; } = string.Empty;
+    public string TitleAr { get; set; } = string.Empty;
+    public string TitleEn { get; set; } = string.Empty;
+    public string DescriptionAr { get; set; } = string.Empty;
+    public string DescriptionEn { get; set; } = string.Empty;
     public string ImageUrl { get; set; } = string.Empty;
     public string? PublicId { get; set; }
     public int OrderIndex { get; set; }

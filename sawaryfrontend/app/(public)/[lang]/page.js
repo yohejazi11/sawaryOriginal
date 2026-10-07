@@ -1,8 +1,12 @@
 import HeroSection from '@/components/ui/HeroSection';
+import HeroSecond from '@/components/ui/HeroSecond';
 import HeroCTA from '@/components/sections/HeroCTA';
 import ServicesSection from '@/components/sections/ServicesSection';
+import { Suspense } from 'react';
+import GallerySection, { GallerySectionSkeleton } from '@/components/sections/GallerySection';
 import Footer from '@/components/sections/Footer';
 import { isLocale } from '@/lib/i18n';
+import { getServiceSections } from '@/lib/services';
 
 const SITE_URL = 'https://www.sawarydecor.com';
 
@@ -41,12 +45,19 @@ export async function generateMetadata({ params }) {
   };
 }
 
-export default function Home() {
+export default async function Home({ params }) {
+  const { lang: rawLang } = await params;
+  const lang = isLocale(rawLang) ? rawLang : 'ar';
+  const serviceSections = await getServiceSections();
   return (
-    <main className="flex flex-col flex-1">
+    <main className="flex flex-col flex-1 bg-[#343229]">
       <HeroSection />
+      <HeroSecond/>
       <HeroCTA />
-      <ServicesSection />
+      <ServicesSection sections={serviceSections} />
+      <Suspense fallback={<GallerySectionSkeleton lang={lang} />}>
+        <GallerySection lang={lang} />
+      </Suspense>
       <Footer />
     </main>
   );

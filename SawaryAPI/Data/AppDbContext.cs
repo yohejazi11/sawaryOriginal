@@ -18,6 +18,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<ContactSettings> ContactSettings => Set<ContactSettings>();
     public DbSet<ContactPhoneNumber> ContactPhoneNumbers => Set<ContactPhoneNumber>();
     public DbSet<SocialLink> SocialLinks => Set<SocialLink>();
+    public DbSet<BlogPost> BlogPosts => Set<BlogPost>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -88,7 +89,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<ServiceSection>(e =>
         {
             e.HasKey(s => s.Id);
-            e.Property(s => s.Title).IsRequired().HasMaxLength(150);
+            e.Property(s => s.TitleAr).IsRequired().HasMaxLength(150);
+            e.Property(s => s.TitleEn).IsRequired().HasMaxLength(150);
+            e.Property(s => s.DescriptionAr).HasMaxLength(4000);
+            e.Property(s => s.DescriptionEn).HasMaxLength(4000);
             e.Property(s => s.Slug).IsRequired().HasMaxLength(150);
             e.HasIndex(s => s.Slug).IsUnique();
         });
@@ -96,7 +100,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<ServiceCard>(e =>
         {
             e.HasKey(c => c.Id);
-            e.Property(c => c.Title).IsRequired().HasMaxLength(150);
+            e.Property(c => c.TitleAr).IsRequired().HasMaxLength(150);
+            e.Property(c => c.TitleEn).IsRequired().HasMaxLength(150);
+            e.Property(c => c.DescriptionAr).HasMaxLength(4000);
+            e.Property(c => c.DescriptionEn).HasMaxLength(4000);
             e.HasOne(c => c.Section)
              .WithMany(s => s.Cards)
              .HasForeignKey(c => c.SectionId)
@@ -141,6 +148,21 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
              .WithMany(c => c.SocialLinks)
              .HasForeignKey(s => s.ContactSettingsId)
              .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<BlogPost>(e =>
+        {
+            e.HasKey(b => b.Id);
+            e.Property(b => b.TitleAr).IsRequired().HasMaxLength(250);
+            e.Property(b => b.TitleEn).IsRequired().HasMaxLength(250);
+            e.Property(b => b.Slug).IsRequired().HasMaxLength(200);
+            e.HasIndex(b => b.Slug).IsUnique();
+            e.Property(b => b.ExcerptAr).HasMaxLength(600);
+            e.Property(b => b.ExcerptEn).HasMaxLength(600);
+            e.Property(b => b.ContentAr).IsRequired();
+            e.Property(b => b.CoverImageUrl).HasMaxLength(500);
+            e.Property(b => b.CoverImagePublicId).HasMaxLength(500);
+            e.HasIndex(b => new { b.IsPublished, b.PublishedAt });
         });
 
         // Seed default admin — password: Sawary@2026

@@ -1,3 +1,5 @@
+import { CACHE_TAGS, REVALIDATE_SECONDS } from './cacheTags'
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5298'
 
 export interface ContactPhoneNumber {
@@ -18,6 +20,7 @@ export interface SocialLink {
 export interface ContactSettings {
   whatsAppNumber: string
   email: string
+  heroVideoUrl: string
   phoneNumbers: ContactPhoneNumber[]
   socialLinks: SocialLink[]
 }
@@ -28,6 +31,7 @@ export interface ContactSettings {
 const FALLBACK: ContactSettings = {
   whatsAppNumber: '966500175000',
   email: 'sawarydecor@gmail.com',
+  heroVideoUrl: '',
   phoneNumbers: [
     { id: 1, orderIndex: 0, number: '+966500175000', labelAr: null, labelEn: null },
   ],
@@ -42,7 +46,7 @@ const FALLBACK: ContactSettings = {
 
 export async function getContactSettings(): Promise<ContactSettings> {
   try {
-    const res = await fetch(`${API_URL}/api/contact-settings`, { cache: 'no-store' })
+    const res = await fetch(`${API_URL}/api/contact-settings`, { next: { revalidate: REVALIDATE_SECONDS, tags: [CACHE_TAGS.contact] } })
     if (!res.ok) return FALLBACK
     return await res.json()
   } catch {

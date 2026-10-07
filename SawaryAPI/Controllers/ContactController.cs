@@ -40,6 +40,7 @@ public partial class ContactController(AppDbContext db) : ControllerBase
     {
         WhatsAppNumber = c.WhatsAppNumber,
         Email = c.Email,
+        HeroVideoUrl = c.HeroVideoUrl,
         PhoneNumbers = c.PhoneNumbers.Select(p => new ContactPhoneNumberDto
         {
             Id = p.Id,
@@ -56,6 +57,11 @@ public partial class ContactController(AppDbContext db) : ControllerBase
             OrderIndex = s.OrderIndex,
         }).ToList(),
     };
+
+    private static bool IsYouTubeUrl(string url) =>
+        Uri.TryCreate(url, UriKind.Absolute, out var uri)
+        && uri.Scheme is "http" or "https"
+        && (uri.Host is "youtu.be" or "youtube.com" or "www.youtube.com" or "m.youtube.com");
 
     // GET /api/contact-settings — public
     [HttpGet]
@@ -84,6 +90,14 @@ public partial class ContactController(AppDbContext db) : ControllerBase
             if (!new EmailAddressAttribute().IsValid(dto.Email))
                 return BadRequest(new { message = "البريد الإلكتروني غير صالح" });
             settings.Email = dto.Email;
+        }
+
+        if (dto.HeroVideoUrl is not null)
+        {
+            var url = dto.HeroVideoUrl.Trim();
+            if (url.Length > 0 && !IsYouTubeUrl(url))
+                return BadRequest(new { message = "رابط يوتيوب غير صالح" });
+            settings.HeroVideoUrl = url;
         }
 
         await db.SaveChangesAsync();

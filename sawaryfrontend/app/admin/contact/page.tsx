@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, FormEvent } from 'react'
 import { apiGet, apiPut, apiPost, apiDelete } from '@/lib/api'
 import { type ContactSettings, type ContactPhoneNumber, type SocialLink } from '@/lib/contact'
 import ReorderableList from '@/components/admin/ReorderableList'
+import { getYouTubeId } from '@/lib/youtube'
 
 const inputClass =
   'w-full rounded-sm border border-brand-primary/25 bg-brand-bg px-3 py-2.5 text-sm text-[rgb(240,238,232)] outline-none focus:border-brand-primary'
@@ -16,6 +17,7 @@ const PLATFORMS = ['instagram', 'x', 'youtube', 'pinterest', 'tiktok', 'other'] 
 export default function ContactAdminPage() {
   const [whatsAppNumber, setWhatsAppNumber] = useState('')
   const [email, setEmail] = useState('')
+  const [heroVideoUrl, setHeroVideoUrl] = useState('')
   const [phoneNumbers, setPhoneNumbers] = useState<ContactPhoneNumber[]>([])
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>([])
   const [loaded, setLoaded] = useState(false)
@@ -40,6 +42,7 @@ export default function ContactAdminPage() {
       const data = await apiGet<ContactSettings>('/api/contact-settings')
       setWhatsAppNumber(data.whatsAppNumber)
       setEmail(data.email)
+      setHeroVideoUrl(data.heroVideoUrl ?? '')
       setPhoneNumbers(data.phoneNumbers)
       setSocialLinks(data.socialLinks)
       setLoaded(true)
@@ -54,9 +57,13 @@ export default function ContactAdminPage() {
     e.preventDefault()
     setError('')
     setSuccess(false)
+    if (heroVideoUrl.trim() && !getYouTubeId(heroVideoUrl)) {
+      setError('رابط يوتيوب غير صالح')
+      return
+    }
     setSaving(true)
     try {
-      await apiPut('/api/contact-settings', { whatsAppNumber, email })
+      await apiPut('/api/contact-settings', { whatsAppNumber, email, heroVideoUrl: heroVideoUrl.trim() })
       setSuccess(true)
       setTimeout(() => setSuccess(false), 1500)
     } catch (err) {
@@ -139,6 +146,18 @@ export default function ContactAdminPage() {
         <div className="mb-6">
           <label className={labelClass}>البريد الإلكتروني</label>
           <input dir="ltr" type="email" value={email} onChange={e => setEmail(e.target.value)} required className={inputClass} />
+        </div>
+
+        <div className="mb-6">
+          <label className={labelClass}>فيديو الواجهة الرئيسية (رابط يوتيوب — اتركه فارغاً لعرض الفيديو الافتراضي)</label>
+          <input
+            dir="ltr"
+            type="url"
+            placeholder="https://www.youtube.com/watch?v=..."
+            value={heroVideoUrl}
+            onChange={e => setHeroVideoUrl(e.target.value)}
+            className={inputClass}
+          />
         </div>
 
         {error && <p className="mb-4 text-sm" style={{ color: '#e07070' }}>{error}</p>}

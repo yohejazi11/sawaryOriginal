@@ -49,6 +49,7 @@ public class ContactSettingsDto
 {
     public string WhatsAppNumber { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
+    public string HeroVideoUrl { get; set; } = string.Empty;
     public List<ContactPhoneNumberDto> PhoneNumbers { get; set; } = [];
     public List<SocialLinkDto> SocialLinks { get; set; } = [];
 }
@@ -57,4 +58,6 @@ public class UpdateContactSettingsDto
 {
     public string? WhatsAppNumber { get; set; }
     public string? Email { get; set; }
+    // Empty string clears the hero video.
+    public string? HeroVideoUrl { get; set; }
 }

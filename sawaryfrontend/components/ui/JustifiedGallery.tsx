@@ -1,8 +1,8 @@
 'use client'
 
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import Image from 'next/image'
 import Link from 'next/link'
+import GalleryImage from '@/components/ui/GalleryImage'
 
 export interface JustifiedGalleryCaption {
   title: string
@@ -24,6 +24,10 @@ interface JustifiedGalleryProps {
   images: JustifiedGalleryImage[]
   onImageClick?: (index: number) => void
   className?: string
+  /** Space between tiles in px (default: edge-to-edge). */
+  gap?: number
+  /** Rounded, bordered tiles — the home gallery card look. */
+  rounded?: boolean
 }
 
 // Images with no stored dimensions (not yet backfilled, or unreadable at upload time)
@@ -151,10 +155,8 @@ function layoutRows(
 // to a project (Works listing — caption rendered below, never over, the photo).
 // Pass a fixed pixel `height` for justified rows, or omit it (single-column fallback)
 // to size the box from the image's own aspect ratio instead.
-// First couple of tiles sit above the fold and are typically the page's LCP element —
-// load those eagerly rather than lazily so Next.js doesn't delay the largest paint.
-const EAGER_LOAD_COUNT = 2
-
+// Every tile lazy-loads behind a pulsing placeholder and fades in (GalleryImage) —
+// the gallery sits below the project cover, which is the page's LCP image.
 function Tile({
   img,
   index,
@@ -163,6 +165,7 @@ function Tile({
   onImageClick,
   sizes,
   onNaturalSize,
+  rounded,
 }: {
   img: JustifiedGalleryImage
   index: number
@@ -172,22 +175,21 @@ function Tile({
   sizes: string
   /** Reports the real decoded size once the photo loads — only wired when img.width/height are still missing. */
   onNaturalSize?: (src: string, width: number, height: number) => void
+  rounded?: boolean
 }) {
-  const eager = index < EAGER_LOAD_COUNT
   const needsMeasurement = !(img.width && img.height)
   const photo = (
     <div
-      className="relative overflow-hidden"
+      className={`relative overflow-hidden ${rounded ? 'rounded-[25px]' : ''}`}
       style={height != null ? { width, height } : { width, aspectRatio: ratioOf(img) }}
     >
-      <Image
+      <GalleryImage
         src={img.src}
         alt={img.alt}
-        fill
-        className="object-contain transition-transform duration-500 group-hover:scale-[1.03]"
+        fit="contain"
+        tone="dark"
+        className="group-hover:scale-[1.03]"
         sizes={sizes}
-        priority={eager}
-        loading={eager ? undefined : 'lazy'}
         onLoad={needsMeasurement ? (e) => {
           const el = e.currentTarget
           if (el.naturalWidth && el.naturalHeight) onNaturalSize?.(img.src, el.naturalWidth, el.naturalHeight)
@@ -220,7 +222,7 @@ function Tile({
     <button
       type="button"
       onClick={() => onImageClick?.(index)}
-      className="group relative shrink-0 overflow-hidden"
+      className={`group relative shrink-0 overflow-hidden ${rounded ? 'rounded-[25px]' : ''}`}
       style={{ width, cursor: onImageClick ? 'pointer' : 'default' }}
     >
       {photo}
@@ -228,7 +230,7 @@ function Tile({
   )
 }
 
-export default function JustifiedGallery({ images, onImageClick, className }: JustifiedGalleryProps) {
+export default function JustifiedGallery({ images, onImageClick, className, gap, rounded = false }: JustifiedGalleryProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [containerWidth, setContainerWidth] = useState(INITIAL_WIDTH_GUESS)
 
@@ -274,9 +276,9 @@ export default function JustifiedGallery({ images, onImageClick, className }: Ju
   if (effectiveImages.length === 0) return null
 
   if (containerWidth < SINGLE_COLUMN_BREAKPOINT) {
-    const stackGap = effectiveImages.some(img => img.caption) ? 'gap-8' : 'gap-0'
+    const stackGap = effectiveImages.some(img => img.caption) ? 'gap-8' : ''
     return (
-      <div ref={containerRef} className={`flex flex-col ${stackGap} ${className ?? ''}`}>
+      <div ref={containerRef} className={`flex flex-col ${stackGap} ${className ?? ''}`} style={stackGap ? undefined : { gap: gap ?? 0 }}>
         {effectiveImages.map((img, i) => (
           <Tile
             key={`${img.src}-${i}`}
@@ -286,6 +288,7 @@ export default function JustifiedGallery({ images, onImageClick, className }: Ju
             onImageClick={onImageClick}
             sizes="100vw"
             onNaturalSize={handleNaturalSize}
+            rounded={rounded}
           />
         ))}
       </div>
@@ -293,14 +296,15 @@ export default function JustifiedGallery({ images, onImageClick, className }: Ju
   }
 
   const breakpoint = BREAKPOINTS.find(bp => containerWidth >= bp.minWidth) ?? BREAKPOINTS[BREAKPOINTS.length - 1]
-  const rows = layoutRows(effectiveImages, containerWidth, breakpoint.targetRowHeight, breakpoint.gap)
+  const tileGap = gap ?? breakpoint.gap
+  const rows = layoutRows(effectiveImages, containerWidth, breakpoint.targetRowHeight, tileGap)
   const hasCaptions = effectiveImages.some(img => img.caption)
 
   return (
     <div ref={containerRef} className={className}>
-      <div className="flex flex-col" style={{ gap: hasCaptions ? breakpoint.gap * 2.5 : breakpoint.gap }}>
+      <div className="flex flex-col" style={{ gap: hasCaptions ? tileGap * 2.5 : tileGap }}>
         {rows.map((row, rowIndex) => (
-          <div key={rowIndex} className="flex" style={{ gap: breakpoint.gap, width: row.width }}>
+          <div key={rowIndex} className="flex" style={{ gap: tileGap, width: row.width }}>
             {row.images.map(img => (
               <Tile
                 key={`${img.src}-${img.index}`}
@@ -311,6 +315,7 @@ export default function JustifiedGallery({ images, onImageClick, className }: Ju
                 onImageClick={onImageClick}
                 sizes={`${Math.ceil(img.displayWidth)}px`}
                 onNaturalSize={handleNaturalSize}
+                rounded={rounded}
               />
             ))}
           </div>

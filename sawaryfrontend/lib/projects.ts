@@ -1,3 +1,5 @@
+import { CACHE_TAGS, REVALIDATE_SECONDS } from './cacheTags'
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5298'
 
 // ── API response shapes ───────────────────────────────────────────────────────
@@ -74,6 +76,7 @@ export interface ProjectTag {
 export interface Project {
   slug: string
   name: string
+  isFeatured: boolean
   tags: ProjectTag[]
   year: string
   location: string
@@ -87,6 +90,7 @@ function apiToProject(p: ApiProject): Project {
   return {
     slug: p.slug,
     name: p.name,
+    isFeatured: !!p.isFeatured,
     tags: (p.tags ?? []).map(t => ({ id: t.id, nameAr: t.nameAr, nameEn: t.nameEn, slug: t.slug })),
     year: p.year,
     location: p.location,
@@ -115,9 +119,12 @@ export async function getProjects(params?: { tagId?: number; featured?: boolean 
   if (params?.featured) search.set('featured', 'true')
   const qs = search.toString() ? `?${search.toString()}` : ''
   try {
-    const res = await fetch(`${API_URL}/api/projects${qs}`, { cache: 'no-store' })
+    const res = await fetch(`${API_URL}/api/projects${qs}`, { next: { revalidate: REVALIDATE_SECONDS, tags: [CACHE_TAGS.projects] } })
     if (!res.ok) return []
-    return res.json()
+    const projects: ApiProjectList[] = await res.json()
+    // Featured first — the API sorts this way too; this stable sort just guarantees it
+    // (keeps the API's order within each group).
+    return [...projects].sort((a, b) => Number(b.isFeatured) - Number(a.isFeatured))
   } catch {
     return []
   }
@@ -133,7 +140,7 @@ export async function getProjectsByTagSlug(slug: string): Promise<ApiProjectList
 
 export async function getProjectById(id: number): Promise<Project | undefined> {
   try {
-    const res = await fetch(`${API_URL}/api/projects/${id}`, { cache: 'no-store' })
+    const res = await fetch(`${API_URL}/api/projects/${id}`, { next: { revalidate: REVALIDATE_SECONDS, tags: [CACHE_TAGS.projects] } })
     if (!res.ok) return undefined
     const data: ApiProject = await res.json()
     return apiToProject(data)
@@ -144,7 +151,7 @@ export async function getProjectById(id: number): Promise<Project | undefined> {
 
 export async function getProject(slug: string): Promise<Project | undefined> {
   try {
-    const res = await fetch(`${API_URL}/api/projects/${slug}`, { cache: 'no-store' })
+    const res = await fetch(`${API_URL}/api/projects/${slug}`, { next: { revalidate: REVALIDATE_SECONDS, tags: [CACHE_TAGS.projects] } })
     if (!res.ok) return undefined
     const data: ApiProject = await res.json()
     return apiToProject(data)
@@ -155,7 +162,7 @@ export async function getProject(slug: string): Promise<Project | undefined> {
 
 export async function getTags(): Promise<ApiTag[]> {
   try {
-    const res = await fetch(`${API_URL}/api/tags`, { cache: 'no-store' })
+    const res = await fetch(`${API_URL}/api/tags`, { next: { revalidate: REVALIDATE_SECONDS, tags: [CACHE_TAGS.tags] } })
     if (!res.ok) return []
     return res.json()
   } catch {
@@ -165,7 +172,7 @@ export async function getTags(): Promise<ApiTag[]> {
 
 export async function getFeaturedProjects(): Promise<ApiProjectList[]> {
   try {
-    const res = await fetch(`${API_URL}/api/projects?featured=true`, { cache: 'no-store' })
+    const res = await fetch(`${API_URL}/api/projects?featured=true`, { next: { revalidate: REVALIDATE_SECONDS, tags: [CACHE_TAGS.projects] } })
     if (!res.ok) return []
     return res.json()
   } catch {

@@ -4,39 +4,24 @@ import { useMemo, useState } from 'react';
 import { ImageOff } from 'lucide-react';
 import Footer from '@/components/sections/Footer';
 import PortfolioCard from '@/components/ui/PortfolioCard';
+import Reveal from '@/components/ui/Reveal';
 import { type ApiProjectList, type ApiTag } from '@/lib/projects';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { localizedHref, type Locale } from '@/lib/i18n';
-import { motion } from 'framer-motion';
-
-const EASE = [0.22, 1, 0.36, 1] as const;
-
-// Same dot-grid texture used in Footer.tsx — kept local since every section file in this
-// codebase defines its own design tokens rather than importing a shared one.
-const DOT_PATTERN =
-    `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Ccircle cx='12' cy='12' r='1' fill='rgba(190%2C156%2C100%2C0.09)'/%3E%3C/svg%3E")`;
 
 function EmptyState({ title, body }: { title: string; body: string }) {
     return (
-        <div className="mx-auto max-w-5xl px-8 md:px-20">
-            <div className="flex flex-col items-center justify-center gap-3 rounded-sm border border-dashed border-brand-primary/25 py-20 text-center">
-                <ImageOff size={28} strokeWidth={1.3} className="text-brand-primary" />
-                <p className="text-lg font-semibold text-brand-cream">{title}</p>
-                <p className="max-w-sm text-sm font-light text-brand-cream/50">{body}</p>
-            </div>
+        <div className="flex flex-col items-center justify-center gap-3 rounded-[25px] border border-dashed border-[#343229]/40 py-20 text-center text-[#343229]">
+            <ImageOff size={28} strokeWidth={1.3} />
+            <p className="text-lg font-semibold">{title}</p>
+            <p className="max-w-sm text-sm font-light opacity-60">{body}</p>
         </div>
     );
 }
 
-function subtitleFor(p: ApiProjectList, lang: Locale): string | undefined {
-    const tagName = p.tags[0] ? (lang === 'ar' ? p.tags[0].nameAr : p.tags[0].nameEn) : null;
-    const parts = [tagName, p.location || null].filter(Boolean);
-    return parts.length ? parts.join(' — ') : undefined;
-}
-
 function PortfolioGrid({ projects, lang }: { projects: ApiProjectList[]; lang: Locale }) {
     return (
-        <div className="mx-auto grid max-w-[1600px] grid-cols-1 gap-3 sm:grid-cols-2 md:gap-3 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {projects
                 .filter((p) => p.coverImageUrl)
                 .map((p, i) => (
@@ -45,8 +30,9 @@ function PortfolioGrid({ projects, lang }: { projects: ApiProjectList[]; lang: L
                         href={localizedHref(lang, `/works/project/${p.id}`)}
                         image={p.coverImageUrl}
                         name={p.name}
-                        subtitle={subtitleFor(p, lang)}
-                        priority={i < 4}
+                        featured={p.isFeatured}
+                        // Stagger across each row of three, like the home gallery's columns.
+                        delay={(i % 3) * 0.15}
                     />
                 ))}
         </div>
@@ -80,79 +66,46 @@ export default function WorksClient({
     }, [initialProjects, activeTagIds]);
 
     return (
-        <main className="min-h-screen bg-brand-bg" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
-            {/* ── Page Header — minimal, typographic, spacious ───────────────────── */}
-            <section className="flex flex-col items-center justify-center px-6 pb-8 pt-32 md:pt-36">
-                <motion.h1
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8, ease: EASE }}
-                    className="font-display mb-10 text-center text-5xl font-bold text-brand-cream md:text-7xl"
-                >
-                    {t('nav.works')}
-                </motion.h1>
+        <main className="flex min-h-screen flex-col bg-[#F4EFE3]" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+            <section className="flex w-full flex-col px-[32px] pb-[96px] pt-36">
+                {/* ── Header ──────────────────────────────────────────────────────── */}
+                <div className="flex w-full items-center justify-between gap-[32px] max-sm:flex-col max-sm:items-start">
+                    <Reveal className="text-[#343229]">
+                        <h1 className="text-[clamp(2.5rem,6vw,4rem)] leading-tight">{t('nav.works')}</h1>
+                    </Reveal>
 
-                {/* Tag filter bar — multi-select pills, OR semantics */}
-                {tags.length > 0 && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 14 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.7, delay: 0.15, ease: EASE }}
-                        className="flex flex-wrap items-center justify-center gap-2"
-                    >
-                        {tags.map(tag => {
-                            const active = activeTagIds.includes(tag.id);
-                            return (
-                                <button
-                                    key={tag.id}
-                                    onClick={() => toggleTag(tag.id)}
-                                    aria-pressed={active}
-                                    className="rounded-full border px-5 py-2 text-sm font-light tracking-[0.1em] uppercase transition-all duration-300"
-                                    style={{
-                                        borderColor: active ? 'rgb(190,156,100)' : 'rgba(190,156,100,0.3)',
-                                        background: active ? 'rgb(190,156,100)' : 'transparent',
-                                        color: active ? '#fff' : 'rgba(244,239,227,0.7)',
-                                    }}
-                                >
-                                    {lang === 'ar' ? tag.nameAr : tag.nameEn}
-                                </button>
-                            );
-                        })}
-                    </motion.div>
-                )}
-            </section>
+                    {/* Tag filter — multi-select pills, OR semantics */}
+                    {tags.length > 0 && (
+                        <Reveal delay={0.15} className="flex flex-wrap items-center gap-2">
+                            {tags.map(tag => {
+                                const active = activeTagIds.includes(tag.id);
+                                return (
+                                    <button
+                                        key={tag.id}
+                                        onClick={() => toggleTag(tag.id)}
+                                        aria-pressed={active}
+                                        className={`rounded-[15px] border border-[#343229] px-6 py-2 text-[16px] transition-all duration-300 ${
+                                            active
+                                                ? 'bg-[#343229] text-[#F4EFE3]'
+                                                : 'text-[#343229] hover:bg-[#343229] hover:text-[#F4EFE3]'
+                                        }`}
+                                    >
+                                        {lang === 'ar' ? tag.nameAr : tag.nameEn}
+                                    </button>
+                                );
+                            })}
+                        </Reveal>
+                    )}
+                </div>
 
-            {/* ── Transition — replaces the old empty gap with a soft visual bridge
-                between the hero and the gallery: a faint dot-grid texture, a warm radial
-                glow, and a thin gradient line that draws in on first view. ──────────── */}
-            <div className="relative h-20 md:h-28" aria-hidden>
-                <div
-                    className="absolute inset-0 opacity-70"
-                    style={{ backgroundImage: DOT_PATTERN, backgroundRepeat: 'repeat' }}
-                />
-                <div
-                    className="absolute inset-0"
-                    style={{
-                        background:
-                            'radial-gradient(ellipse 55% 140% at 50% 50%, rgba(190,156,100,0.12) 0%, transparent 75%)',
-                    }}
-                />
-                <motion.div
-                    className="absolute inset-x-0 top-1/2 mx-auto h-px w-full max-w-sm origin-center -translate-y-1/2 bg-gradient-to-r from-transparent via-brand-primary/55 to-transparent"
-                    initial={{ scaleX: 0, opacity: 0 }}
-                    whileInView={{ scaleX: 1, opacity: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.9, ease: EASE }}
-                />
-            </div>
-
-            {/* ── All Projects ──────────────────────────────────────────────────── */}
-            <section className="px-4 pb-28 md:px-10">
-                {filteredProjects.length > 0 ? (
-                    <PortfolioGrid projects={filteredProjects} lang={lang} />
-                ) : (
-                    <EmptyState title={t('worksPage.noProjectsTitle')} body={t('worksPage.noProjectsBody')} />
-                )}
+                {/* ── All Projects ────────────────────────────────────────────────── */}
+                <div className="mt-[64px]">
+                    {filteredProjects.length > 0 ? (
+                        <PortfolioGrid projects={filteredProjects} lang={lang} />
+                    ) : (
+                        <EmptyState title={t('worksPage.noProjectsTitle')} body={t('worksPage.noProjectsBody')} />
+                    )}
+                </div>
             </section>
 
             <Footer />

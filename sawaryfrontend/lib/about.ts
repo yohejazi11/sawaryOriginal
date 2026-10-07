@@ -1,3 +1,5 @@
+import { CACHE_TAGS, REVALIDATE_SECONDS } from './cacheTags'
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5298'
 
 export interface AboutFaqItem {
@@ -125,7 +127,7 @@ const FALLBACK: AboutContent = {
 
 export async function getAboutContent(): Promise<AboutContent> {
   try {
-    const res = await fetch(`${API_URL}/api/about`, { cache: 'no-store' })
+    const res = await fetch(`${API_URL}/api/about`, { next: { revalidate: REVALIDATE_SECONDS, tags: [CACHE_TAGS.about] } })
     if (!res.ok) return FALLBACK
     return await res.json()
   } catch {

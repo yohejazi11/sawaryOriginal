@@ -14,7 +14,7 @@ export default function WhatsAppButton() {
       target="_blank"
       rel="noopener noreferrer"
       aria-label="تواصل معنا عبر واتساب"
-      className="fixed bottom-6 left-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-brand-primary text-brand-cream shadow-lg transition-transform duration-200 hover:scale-110"
+      className="fixed bottom-6 left-[32px] z-50 flex h-14 w-14 items-center justify-center rounded-full bg-brand-primary text-brand-cream shadow-lg transition-transform duration-200 hover:scale-110"
     >
       <span className="absolute inset-0 rounded-full bg-brand-primary opacity-75 animate-ping" />
       <svg
